@@ -1,0 +1,5 @@
+claim_id,manuscript_section,exact_claim_text,source_table_or_figure,source_csv_or_tex,generation_script,reproduction_command,status,notes
+C01,Results/Feasibility,"E-DE achieved X% accepted hard-feasible terminations",tab:feasibility_summary_generated,generated/summary_by_method.csv,scripts/aggregate_results.py,"python scripts/aggregate_results.py",todo,
+C02,Results/Stats,"E-DE significantly outperformed baseline on J_scaled",tab:posthoc_holm_generated,generated/master_stats.csv,scripts/run_stats.py,"python scripts/run_stats.py",todo,
+C03,Results/Omnibus,"Across-instance Friedman analysis supported method differences",tab:friedman_omnibus_generated,generated/master_stats.csv,scripts/run_stats.py,"python scripts/run_stats.py",todo,
+C04,Results/Compute,"E-DE improved improvement-per-Wh over StdDE",generated/summary_by_method.csv,generated/summary_by_method.csv,scripts/aggregate_results.py,"python scripts/aggregate_results.py",todo,

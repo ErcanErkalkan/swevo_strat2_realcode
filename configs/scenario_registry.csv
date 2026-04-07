@@ -1,0 +1,4 @@
+scenario_id,description,psi_vehicle,psi_shift,psi_arc
+S1_balanced,balanced fleet; mild shift; mild arc,"ICE:1.00, HEV:0.92, EV:0.55","[1.00,1.08,0.96]","urban_core:1.05, ring:1.00, suburban:0.97"
+S2_peak_dirty,balanced fleet; strong dirty peak shift,"ICE:1.00, HEV:0.92, EV:0.58","[1.00,1.22,0.90]","urban_core:1.08, ring:1.00, suburban:0.95"
+S3_mixed_fleet_arc,mixed fleet; strong shift and arc heterogeneity,"ICE:1.00, HEV:0.88, EV:0.42","[1.05,1.25,0.82]","urban_core:1.12, ring:0.99, suburban:0.90"

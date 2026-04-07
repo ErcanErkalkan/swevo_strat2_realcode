@@ -1,0 +1,42 @@
+primary_fairness_currency: evaluated_candidates
+budgets:
+  small:
+    customers: 100
+    population_size: 50
+    generations: 500
+    total_eval_budget: 25050
+    walltime_cap_s: 1800
+    local_refinement_move_budget: 400
+    repair_attempt_budget: 40
+  medium:
+    customers: 200
+    population_size: 80
+    generations: 500
+    total_eval_budget: 40080
+    walltime_cap_s: 3600
+    local_refinement_move_budget: 800
+    repair_attempt_budget: 60
+  large:
+    customers: 400
+    population_size: 100
+    generations: 800
+    total_eval_budget: 80100
+    walltime_cap_s: 7200
+    local_refinement_move_budget: 1200
+    repair_attempt_budget: 80
+shared_constants:
+  overtime_cap_eta: 0.05
+  epsilon: 1.0e-9
+  epsilon_energy: 1.0e-9
+  objective_weights:
+    cost: 1.0
+    energy: 1.0
+    co2: 1.0
+  jde:
+    pF: 0.10
+    pCR: 0.10
+    F_range: [0.50, 0.95]
+    CR_range: [0.60, 1.00]
+  lns:
+    period_generations: 10
+    destruction_fraction: 0.10

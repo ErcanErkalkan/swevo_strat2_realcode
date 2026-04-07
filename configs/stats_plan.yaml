@@ -1,0 +1,31 @@
+primary_endpoint: j_scaled_final
+secondary_endpoints:
+  - accepted_final
+  - strict_duty_final
+  - cost_final
+  - energy_final
+  - co2_final
+  - compute_wh
+  - imp_per_wh
+within_instance:
+  pairing_key: seed
+  tests:
+    continuous: wilcoxon_signed_rank
+    binary: mcnemar_or_bootstrap_diff
+  effect_sizes:
+    - rank_biserial_correlation
+    - cliffs_delta
+  confidence_intervals:
+    method: bootstrap
+    level: 0.95
+    resamples: 10000
+across_instance:
+  aggregation: median_over_seeds
+  omnibus: friedman_iman_davenport
+  posthoc: holm_control_vs_others
+  control_method: EDE
+  effect_size: kendalls_w
+reporting_rules:
+  - report_unconditional_and_conditional_on_accepted_runs
+  - do_not_claim_global_win_without_adjusted_significance
+  - classwise_analysis_required_for_clustered_random_mixed

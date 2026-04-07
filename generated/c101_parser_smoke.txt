@@ -1,0 +1,11 @@
+name=C101
+family=solomon
+structure_class=clustered
+customer_count=100
+depot_xy=(40.0, 50.0)
+source_kind=real
+source_path=data\benchmarks\solomon\solomon-100\In\c101.txt
+ice_capacity=200.0
+num_shifts=3
+shift_1=0.0,1236.0
+customer_1=1,45.0,68.0,10.0,912.0,967.0,90.0

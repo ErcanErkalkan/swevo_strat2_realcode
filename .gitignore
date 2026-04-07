@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+generated/*.csv
+generated/*.tex
+generated/*.json
+generated/*.log
+generated/checkpoints/
+generated/archives/
+generated/figures/

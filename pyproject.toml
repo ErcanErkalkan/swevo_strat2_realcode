@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swevo-strat2-fullstack"
+version = "0.1.0"
+description = "Evidence-locked SWEVO experiment pipeline for MS-VRPTW comparator study"
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=6.0",
+  "pandas>=2.0",
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "statsmodels>=0.14",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,33 @@
+methods:
+  EDE:
+    family: proposed
+    description: Full Sustainability-Aware Enhanced Differential Evolution
+    modules: [deterministic_seed, jde_adaptation, boundary_lns, feasibility_first_decoder]
+  StdDE:
+    family: baseline
+    description: Configuration-matched Standard Differential Evolution
+    modules: [fixed_seedless_init, fixed_F_CR, no_boundary_lns, feasibility_first_decoder]
+  ALNS_MS:
+    family: baseline
+    description: Shift-aware ALNS with identical feasibility layer
+    modules: [destroy_repair, adaptive_weights, feasibility_first_decoder]
+  HGS_MS:
+    family: baseline
+    description: Hybrid Genetic Search with split decoding and identical feasibility layer
+    modules: [giant_tour_population, split_decode, local_search, feasibility_first_decoder]
+  ILS_MS:
+    family: baseline
+    description: Iterated Local Search with boundary perturbations and identical feasibility layer
+    modules: [single_solution_ls, perturbation, feasibility_first_decoder]
+  A1_NoSeed:
+    family: ablation
+    description: E-DE without deterministic feasible seeding
+    removes: [deterministic_seed]
+  A2_NoJDE:
+    family: ablation
+    description: E-DE without self-adaptive jDE parameter control
+    removes: [jde_adaptation]
+  A3_NoLNS:
+    family: ablation
+    description: E-DE without boundary-focused LNS
+    removes: [boundary_lns]

@@ -1,0 +1,45 @@
+master_runs_columns:
+  - run_id
+  - phase
+  - benchmark_family
+  - customer_count
+  - instance_id
+  - structure_class
+  - scenario_id
+  - method_id
+  - seed
+  - tier
+  - eval_budget
+  - accepted_final
+  - strict_duty_final
+  - v_cap_final
+  - v_tw_final
+  - v_shift_final
+  - overtime_sum_final
+  - overtime_ratio_sum_final
+  - cost_final
+  - energy_final
+  - co2_final
+  - j_scaled_init
+  - j_scaled_final
+  - improvement_abs
+  - improvement_pct
+  - runtime_sec
+  - compute_wh
+  - imp_per_wh
+  - time_to_first_feasible_sec
+  - evals_to_first_feasible
+  - n_repair_attempts
+  - n_repair_success
+  - n_rejected_offspring
+  - archive_size_final
+  - notes
+accepted_semantics:
+  accepted_final_rule: accepted_final == 1 iff v_cap_final == 0 and v_tw_final == 0 and v_shift_final == 0
+  strict_duty_rule: strict_duty_final == 1 iff accepted_final == 1 and overtime_sum_final == 0
+  prohibition: final_performance_tables_must_not_show_nonzero_violations_for_accepted_rows
+diagnostics_only_columns:
+  - pre_repair_v_cap
+  - pre_repair_v_tw
+  - pre_repair_v_shift
+  - rejected_reason

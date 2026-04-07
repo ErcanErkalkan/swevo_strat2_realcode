@@ -1,0 +1,47 @@
+SWEVO pipeline audit
+date=2026-04-07
+
+Benchmark verification:
+- inventory_missing=1
+- manifest_missing=1
+- missing_instance=solomon RC109 small
+- fallback_policy=real benchmarks enforced during smoke and pilot runs
+
+C101 parser smoke:
+- output=generated/c101_parser_smoke.txt
+- run_output=generated/master_runs_c101_smoke.csv
+- failed_runs=0
+- accepted_runs=1
+
+Medium manifest:
+- output=configs/experiment_manifest_medium.csv
+- resolution_report=generated/experiment_manifest_medium_resolution.csv
+- rows=5760
+- missing_instances=0
+
+Medium pilot run:
+- manifest=configs/experiment_manifest_medium_pilot.csv
+- output=generated/master_runs_medium_pilot.csv
+- summary=generated/master_runs_medium_pilot_summary.txt
+- failures_file=generated/master_runs_medium_pilot_failures.txt
+- failed_runs=0
+- accepted_runs=72
+- strict_runs=72
+- synthetic_fallback_rows=0
+
+Validator and downstream artifacts:
+- validator_output=generated/validation_medium_pilot.txt
+- summary_output=generated/medium_pilot/summary_by_method.csv
+- stats_output=generated/medium_pilot/master_stats.csv
+- latex_outputs=generated/medium_pilot/table_feasibility_summary.tex, generated/medium_pilot/table_friedman_omnibus.tex, generated/medium_pilot/table_posthoc_holm.tex
+- holm_correction=available
+
+Code and environment updates:
+- real benchmark parser now indexes nested benchmark directories
+- real benchmark parser now preserves the native VRPTW horizon across scenario shifts
+- real benchmark parser now reads vehicle capacity from benchmark headers
+- statsmodels_installed=0.14.6
+- tests=python -m pytest -q -> 1 passed
+
+Remaining issue:
+- RC109 small is still absent from data/benchmarks and would fail under enforced real-benchmark mode

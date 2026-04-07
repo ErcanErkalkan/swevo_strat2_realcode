@@ -1,0 +1,6 @@
+expected_runs=72
+produced_runs=72
+missing_runs=0
+accepted_runs=72
+strict_runs=72
+real_source_rows=72
