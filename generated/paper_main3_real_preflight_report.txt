@@ -1,0 +1,13 @@
+source_manifest=configs\experiment_manifest_full.csv
+requested_manifest=configs\experiment_manifest_paper_main3_real_requested.csv
+ready_manifest=configs\experiment_manifest_paper_main3_real_ready.csv
+blocked_manifest=configs\experiment_manifest_paper_main3_real_blocked.csv
+resolution_csv=generated\paper_main3_real_preflight_resolution.csv
+batch_index_csv=generated\paper_main3_real_batch_index.csv
+methods=EDE,ILS_MS,StdDE
+tiers=small,medium,large
+requested_runs=6480
+ready_runs=6300
+blocked_runs=180
+blocked_instances=RC109
+batch_count=30

@@ -1,0 +1,40 @@
+Medium compare validation
+date=2026-04-08
+
+Manifest and outputs:
+- manifest=configs/experiment_manifest_medium_compare.csv
+- runs=generated/master_runs_medium_compare.csv
+- run_summary=generated/master_runs_medium_compare_summary.txt
+- failures=generated/master_runs_medium_compare_failures.txt
+- validator=generated/validation_medium_compare.txt
+- summary=generated/medium_compare_summary.csv
+- stats=generated/medium_compare_stats.csv
+- latex_dir=generated/medium_compare
+
+Coverage:
+- instances=all 12 medium instances
+- scenarios=3
+- methods=EDE,ILS_MS,StdDE
+- seeds=1,2
+- total_runs=216
+
+Execution quality:
+- completed=216
+- failed_runs=0
+- accepted_runs=216
+- strict_runs=216
+- real_source_rows=216
+
+Performance:
+- EDE median_j=0.969103
+- ILS_MS median_j=0.980126
+- StdDE median_j=1.107668
+- EDE vs ILS_MS: wins=41 losses=28 ties=3
+- EDE vs ILS_MS p_holm=0.11934813864257372
+- EDE vs StdDE: wins=72 losses=0 ties=0
+- EDE vs StdDE p_holm=3.317503604752796e-13
+
+Interpretation:
+- EDE is competitive with ILS_MS on this broader medium comparison
+- EDE is clearly better than StdDE
+- EDE shows a directional edge over ILS_MS here, but not a statistically significant one after Holm

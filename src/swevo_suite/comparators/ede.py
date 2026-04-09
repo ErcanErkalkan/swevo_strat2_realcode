@@ -25,6 +25,9 @@ class EDEComparator(BaseComparator):
             diversity_restart=True,
             fixed_F=0.72,
             fixed_CR=0.88,
+            deep_intensify=True,
+            deep_polish_moves=18 if plan.customer_count <= 120 else 24 if plan.customer_count <= 240 else 28,
+            use_trajectory_search=True,
         )
 
     def solve(self, plan: RunPlan):

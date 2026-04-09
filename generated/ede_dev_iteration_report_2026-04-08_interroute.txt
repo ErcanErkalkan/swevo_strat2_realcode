@@ -1,0 +1,26 @@
+EDE iteration report
+date=2026-04-08 (inter-route neighborhood)
+
+Code changes:
+- Added inter-route segment relocate and small cross-exchange to deep_route_polish
+- Reused those neighborhoods inside EDE deep intensification and trajectory search
+
+Focused diagnostics:
+- C1_2_1 S1_balanced budget12: EDE=0.936832, ILS_MS=0.931065
+- C1_2_1 S1_balanced budget24: EDE=0.936832, ILS_MS not rerun in same script here
+- RC1_2_1 S1_balanced budget12: EDE=0.955037, ILS_MS=0.938441
+- RC1_2_1 S1_balanced budget24: EDE=0.955037, ILS_MS not rerun in same script here
+
+Development compare (27 runs, budget=12):
+- output=generated/master_runs_dev_compare.csv
+- summary=generated/dev_compare_summary.csv
+- stats=generated/dev_compare_stats.csv
+- EDE vs ILS_MS: wins=4 losses=5 ties=0
+- EDE vs StdDE: wins=9 losses=0 ties=0
+- median_j: EDE=0.977297, ILS_MS=0.938441, StdDE=1.102123
+- Holm: EDE vs ILS_MS p_holm=0.0546875; EDE vs StdDE p_holm=0.0078125
+
+Assessment:
+- EDE improved again and is now close to ILS_MS on this dev set
+- The gap to ILS_MS is no longer significant after Holm at alpha=0.05 in this 27-run dev comparison
+- EDE still has slightly worse median j than ILS_MS, so broader dev validation is the next safest step

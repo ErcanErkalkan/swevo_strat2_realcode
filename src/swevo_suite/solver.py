@@ -451,6 +451,278 @@ def boundary_lns(
     return current
 
 
+def critical_route_customers(problem: ProblemInstance, sol: Solution) -> List[int]:
+    critical = route_boundary_customers(problem, sol)
+    horizon = max(problem.shifts[-1].end, 1.0)
+    for route in sol.routes:
+        if not route.customers:
+            continue
+        critical.extend(route.customers[:2])
+        critical.extend(route.customers[-2:])
+        for cid in route.customers:
+            start = route.metrics.service_times.get(cid)
+            if start is None:
+                continue
+            slack = problem.customers[cid].tw_end - start
+            if slack < 0.08 * horizon:
+                critical.append(cid)
+    return sorted(set(critical))
+
+
+def perturbed_permutation_from_solution(problem: ProblemInstance, sol: Solution, rng: random.Random) -> List[int]:
+    base_perm = permutation_from_solution(sol)
+    if len(base_perm) < 2:
+        return base_perm
+    focus = critical_route_customers(problem, sol)
+    if len(focus) >= 2:
+        a, b = rng.sample(focus, 2)
+        ia, ib = base_perm.index(a), base_perm.index(b)
+        base_perm[ia], base_perm[ib] = base_perm[ib], base_perm[ia]
+    else:
+        swaps = max(2, problem.customer_count // 35)
+        for _ in range(swaps):
+            i, j = rng.sample(range(problem.customer_count), 2)
+            base_perm[i], base_perm[j] = base_perm[j], base_perm[i]
+    return base_perm
+
+
+def deep_route_polish(
+    problem: ProblemInstance,
+    sol: Solution,
+    references: tuple[float, float, float],
+    max_moves: int = 32,
+) -> Solution:
+    def route_center(route: Route) -> tuple[float, float]:
+        if not route.customers:
+            return problem.depot_xy
+        xs = [problem.customers[cid].x for cid in route.customers]
+        ys = [problem.customers[cid].y for cid in route.customers]
+        return (float(np.mean(xs)), float(np.mean(ys)))
+
+    def route_pairs(candidate: Solution, limit: int = 10) -> list[tuple[int, int]]:
+        horizon = max(problem.shifts[-1].end, 1.0)
+        centers = [route_center(route) for route in candidate.routes]
+        mids = []
+        for route in candidate.routes:
+            if route.customers:
+                vals = [0.5 * (problem.customers[cid].tw_start + problem.customers[cid].tw_end) for cid in route.customers]
+                mids.append(sum(vals) / len(vals))
+            else:
+                mids.append(0.5 * horizon)
+        scored = []
+        for ridx in range(len(candidate.routes)):
+            for jdx in range(ridx + 1, len(candidate.routes)):
+                spatial = euclidean(centers[ridx], centers[jdx])
+                temporal = abs(mids[ridx] - mids[jdx]) / horizon
+                scored.append((spatial + 12.0 * temporal, ridx, jdx))
+        scored.sort(key=lambda item: item[0])
+        return [(ridx, jdx) for _, ridx, jdx in scored[:limit]]
+
+    best = sol.copy()
+    moves = 0
+    improved = True
+    while improved and moves < max_moves:
+        improved = False
+        # Intra-route 2-opt
+        for ridx, route in enumerate(best.routes):
+            n = len(route.customers)
+            if n < 4:
+                continue
+            for i in range(n - 2):
+                for j in range(i + 2, n + 1):
+                    cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
+                    cand_routes[ridx].customers = (
+                        cand_routes[ridx].customers[:i]
+                        + list(reversed(cand_routes[ridx].customers[i:j]))
+                        + cand_routes[ridx].customers[j:]
+                    )
+                    cand = evaluate_solution(problem, cand_routes, references)
+                    moves += 1
+                    if dominance_key(cand) < dominance_key(best):
+                        best = cand
+                        improved = True
+                        break
+                if improved or moves >= max_moves:
+                    break
+            if improved or moves >= max_moves:
+                break
+        if improved:
+            continue
+        # Same-route segment reinsertion
+        for ridx, route in enumerate(best.routes):
+            n = len(route.customers)
+            if n < 4:
+                continue
+            for seg_len in (2, 3):
+                if n <= seg_len:
+                    continue
+                for start in range(n - seg_len + 1):
+                    segment = route.customers[start : start + seg_len]
+                    remaining = route.customers[:start] + route.customers[start + seg_len :]
+                    for tpos in range(len(remaining) + 1):
+                        if tpos == start:
+                            continue
+                        reordered = remaining[:tpos] + segment + remaining[tpos:]
+                        cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
+                        cand_routes[ridx].customers = reordered
+                        cand = evaluate_solution(problem, cand_routes, references)
+                        moves += 1
+                        if dominance_key(cand) < dominance_key(best):
+                            best = cand
+                            improved = True
+                            break
+                    if improved or moves >= max_moves:
+                        break
+                if improved or moves >= max_moves:
+                    break
+            if improved or moves >= max_moves:
+                break
+        if improved:
+            continue
+        # Inter-route segment relocate
+        for ridx, jdx in route_pairs(best):
+            directions = [(ridx, jdx), (jdx, ridx)]
+            for src_idx, dst_idx in directions:
+                src = best.routes[src_idx]
+                dst = best.routes[dst_idx]
+                for seg_len in (1, 2):
+                    if len(src.customers) <= seg_len:
+                        continue
+                    dst_positions = {0, len(dst.customers)}
+                    if dst.customers:
+                        anchor = src.customers[0]
+                        nearest = min(
+                            range(len(dst.customers)),
+                            key=lambda pos: euclidean(customer_pos(problem, anchor), customer_pos(problem, dst.customers[pos])),
+                        )
+                        dst_positions.update({nearest, nearest + 1})
+                    for start in range(len(src.customers) - seg_len + 1):
+                        segment = src.customers[start : start + seg_len]
+                        base_src = src.customers[:start] + src.customers[start + seg_len :]
+                        for pos in sorted(p for p in dst_positions if 0 <= p <= len(dst.customers)):
+                            cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
+                            cand_routes[src_idx].customers = list(base_src)
+                            cand_routes[dst_idx].customers = cand_routes[dst_idx].customers[:pos] + list(segment) + cand_routes[dst_idx].customers[pos:]
+                            cand_routes = [route for route in cand_routes if route.customers]
+                            cand = evaluate_solution(problem, cand_routes, references)
+                            moves += 1
+                            if dominance_key(cand) < dominance_key(best):
+                                best = cand
+                                improved = True
+                                break
+                        if improved or moves >= max_moves:
+                            break
+                    if improved or moves >= max_moves:
+                        break
+                if improved or moves >= max_moves:
+                    break
+            if improved or moves >= max_moves:
+                break
+        if improved:
+            continue
+        # Small cross-exchange between nearby routes
+        for ridx, jdx in route_pairs(best):
+            ra = best.routes[ridx]
+            rb = best.routes[jdx]
+            for la, lb in ((1, 1), (2, 1), (1, 2)):
+                if len(ra.customers) < la or len(rb.customers) < lb:
+                    continue
+                for ia in range(len(ra.customers) - la + 1):
+                    seg_a = ra.customers[ia : ia + la]
+                    rest_a = ra.customers[:ia] + ra.customers[ia + la :]
+                    for ib in range(len(rb.customers) - lb + 1):
+                        seg_b = rb.customers[ib : ib + lb]
+                        rest_b = rb.customers[:ib] + rb.customers[ib + lb :]
+                        cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
+                        cand_routes[ridx].customers = rest_a[:ia] + list(seg_b) + rest_a[ia:]
+                        cand_routes[jdx].customers = rest_b[:ib] + list(seg_a) + rest_b[ib:]
+                        cand = evaluate_solution(problem, cand_routes, references)
+                        moves += 1
+                        if dominance_key(cand) < dominance_key(best):
+                            best = cand
+                            improved = True
+                            break
+                    if improved or moves >= max_moves:
+                        break
+                if improved or moves >= max_moves:
+                    break
+            if improved or moves >= max_moves:
+                break
+    return best
+
+
+def elite_route_perturbation(
+    problem: ProblemInstance,
+    sol: Solution,
+    references: tuple[float, float, float],
+    rng: random.Random,
+    stats: SearchStats,
+    repair_budget: int,
+    ls_moves: int,
+    polish_moves: int = 0,
+) -> Solution:
+    current = sol.copy()
+    best = sol.copy()
+    temperature = 0.03
+    for _ in range(4):
+        cand_perm = perturbed_permutation_from_solution(problem, current, rng)
+        cand = evaluate_solution(problem, decode_permutation(problem, cand_perm, references), references)
+        cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2))
+        cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves)
+        if polish_moves > 0:
+            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves)
+        delta = cand.score - current.score
+        if dominance_key(cand) < dominance_key(current) or rng.random() < math.exp(-max(0.0, delta) / max(temperature, 1e-6)):
+            current = cand
+        if dominance_key(cand) < dominance_key(best):
+            best = cand
+        temperature *= 0.85
+    return best
+
+
+def trajectory_intensification(
+    problem: ProblemInstance,
+    seed_sol: Solution,
+    references: tuple[float, float, float],
+    rng: random.Random,
+    stats: SearchStats,
+    iterations: int,
+    repair_budget: int,
+    ls_moves: int,
+    polish_moves: int = 0,
+) -> tuple[Solution, Solution, list[Solution]]:
+    current = seed_sol.copy()
+    best = seed_sol.copy()
+    generated: list[Solution] = []
+    temperature = 0.035
+    for step in range(iterations):
+        if step % 3 == 0:
+            cand = boundary_lns(
+                problem,
+                current,
+                references,
+                rng,
+                destroy_frac=0.14 if problem.customer_count <= 120 else 0.10,
+                ls_moves=max(18, ls_moves // 2),
+            )
+        else:
+            perm = perturbed_permutation_from_solution(problem, current, rng)
+            cand = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
+            if not cand.accepted:
+                cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2))
+            cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves)
+        if polish_moves > 0:
+            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves)
+        generated.append(cand)
+        delta = cand.score - current.score
+        if dominance_key(cand) < dominance_key(current) or rng.random() < math.exp(-max(0.0, delta) / max(temperature, 1e-6)):
+            current = cand
+        if dominance_key(cand) < dominance_key(best):
+            best = cand
+        temperature *= 0.90
+    return best, current, generated
+
+
 @dataclass
 class MetaheuristicConfig:
     population_size: int
@@ -465,6 +737,9 @@ class MetaheuristicConfig:
     diversity_restart: bool = True
     fixed_F: float = 0.72
     fixed_CR: float = 0.88
+    deep_intensify: bool = False
+    deep_polish_moves: int = 0
+    use_trajectory_search: bool = False
 
 
 def default_population_size(customer_count: int) -> int:
@@ -475,10 +750,21 @@ def default_population_size(customer_count: int) -> int:
     return 44
 
 
+def ede_population_size(cfg: MetaheuristicConfig) -> int:
+    # Leave enough budget for actual evolution instead of spending everything on initialization.
+    if cfg.eval_budget <= 6:
+        return min(cfg.population_size, 4)
+    target = max(4, min(12, cfg.eval_budget // 3))
+    return min(cfg.population_size, target)
+
+
 def initialize_population(problem: ProblemInstance, references: tuple[float, float, float], cfg: MetaheuristicConfig) -> list[tuple[np.ndarray, Solution, float, float]]:
     rng = random.Random(cfg.seed)
     n = problem.customer_count
-    target_population = min(cfg.population_size, max(6, min(cfg.eval_budget, 12)))
+    target_population = ede_population_size(cfg)
+    if cfg.deep_intensify:
+        reserve = max(2, cfg.eval_budget // 3) if cfg.use_trajectory_search else 2
+        target_population = min(cfg.population_size, max(target_population, min(max(5, cfg.eval_budget - reserve), 9)))
     population: list[tuple[np.ndarray, Solution, float, float]] = []
     if cfg.use_seed:
         seed_perm = seed_permutation(problem, rng)
@@ -486,7 +772,22 @@ def initialize_population(problem: ProblemInstance, references: tuple[float, flo
         sol = evaluate_solution(problem, decode_permutation(problem, seed_perm, references), references)
         sol = bounded_repair(problem, sol, references, SearchStats(), max_attempts=cfg.repair_budget)
         sol = try_improve_with_local_search(problem, sol, references, max_moves=cfg.local_search_moves)
+        if cfg.deep_polish_moves > 0:
+            sol = deep_route_polish(problem, sol, references, max_moves=cfg.deep_polish_moves)
         population.append((keys, sol, cfg.fixed_F, cfg.fixed_CR))
+        anchor_sol = sol
+        anchored_variants = target_population - 1 if cfg.deep_intensify else min(target_population - 1, 4 if problem.customer_count <= 120 else 6)
+        for _ in range(max(0, anchored_variants)):
+            pert_perm = perturbed_permutation_from_solution(problem, anchor_sol, rng)
+            pert_keys = keys_from_permutation(pert_perm, rng)
+            pert_sol = evaluate_solution(problem, decode_permutation(problem, pert_perm, references), references)
+            pert_sol = bounded_repair(problem, pert_sol, references, SearchStats(), max_attempts=max(4, cfg.repair_budget // 2))
+            pert_sol = try_improve_with_local_search(problem, pert_sol, references, max_moves=cfg.local_search_moves)
+            if cfg.deep_polish_moves > 0:
+                pert_sol = deep_route_polish(problem, pert_sol, references, max_moves=cfg.deep_polish_moves)
+            population.append((pert_keys, pert_sol, cfg.fixed_F, cfg.fixed_CR))
+            if dominance_key(pert_sol) < dominance_key(anchor_sol):
+                anchor_sol = pert_sol
     while len(population) < target_population:
         perm = list(problem.customer_ids)
         rng.shuffle(perm)
@@ -514,16 +815,43 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
     best = min((p[1] for p in population), key=dominance_key)
     init_best = best.score
     evals = len(population)
-    for _, sol, _, _ in population:
+    for idx, (_, sol, _, _) in enumerate(population, start=1):
         archive = non_dominated_insert(archive, sol)
         if sol.accepted and stats.first_feasible_eval is None:
-            stats.first_feasible_eval = evals
+            stats.first_feasible_eval = idx
             stats.first_feasible_sec = time.perf_counter() - start
+    if cfg.use_trajectory_search and evals < cfg.eval_budget:
+        traj_iters = min(max(2, cfg.eval_budget // 4), cfg.eval_budget - evals)
+        t_best, _, generated = trajectory_intensification(
+            problem,
+            best,
+            references,
+            rng,
+            stats,
+            iterations=traj_iters,
+            repair_budget=cfg.repair_budget,
+            ls_moves=max(cfg.local_search_moves, 22),
+            polish_moves=cfg.deep_polish_moves,
+        )
+        for cand in generated:
+            evals += 1
+            archive = non_dominated_insert(archive, cand)
+            if cand.accepted and stats.first_feasible_eval is None:
+                stats.first_feasible_eval = evals
+                stats.first_feasible_sec = time.perf_counter() - start
+        if dominance_key(t_best) < dominance_key(best):
+            best = t_best
+            best_perm = permutation_from_solution(best)
+            worst = max(range(len(population)), key=lambda idx: dominance_key(population[idx][1]))
+            population[worst] = (keys_from_permutation(best_perm, rng), best, cfg.fixed_F, cfg.fixed_CR)
     gen = 0
+    stagnation_gens = 0
     while evals < cfg.eval_budget:
         gen += 1
+        improved_this_gen = False
         pop_scores = [p[1].score for p in population]
         div = float(np.std(np.array([k[:, 0] for k, _, _, _ in population]), axis=0).mean())
+        best_keys = keys_from_permutation(permutation_from_solution(best), rng)
         for i in range(len(population)):
             if evals >= cfg.eval_budget:
                 break
@@ -540,7 +868,10 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 # diversity feedback
                 F = min(0.95, max(0.5, F * (1.0 + 0.35 * (0.10 - div))))
                 CR = min(1.0, max(0.55, CR * (1.0 - 0.25 * (0.10 - div))))
-            donor = population[r1][0] + F * (population[r2][0] - population[r3][0])
+            if cfg.use_jde:
+                donor = target_keys + 0.35 * (best_keys - target_keys) + F * (population[r1][0] - population[r2][0])
+            else:
+                donor = population[r1][0] + F * (population[r2][0] - population[r3][0])
             donor = np.mod(donor, 1.0)
             trial = target_keys.copy()
             j_rand = rng.randrange(problem.customer_count)
@@ -549,7 +880,6 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                     trial[j, :] = donor[j, :]
             perm = permutation_from_keys(trial)
             cand = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
-            evals += 1
             if not cand.accepted:
                 cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget)
             cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves)
@@ -562,6 +892,7 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 population[i] = (trial, cand, F, CR)
                 if dominance_key(cand) < dominance_key(best):
                     best = cand
+                    improved_this_gen = True
             else:
                 stats.n_rejected_offspring += 1
         if cfg.use_lns and gen % max(1, cfg.lns_period) == 0 and evals < cfg.eval_budget:
@@ -570,6 +901,26 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
             archive = non_dominated_insert(archive, lns_sol)
             if dominance_key(lns_sol) < dominance_key(best):
                 best = lns_sol
+                improved_this_gen = True
+        if cfg.use_jde and cfg.use_lns and stagnation_gens >= 2 and evals < cfg.eval_budget:
+            shaken = elite_route_perturbation(
+                problem,
+                best,
+                references,
+                rng,
+                stats,
+                repair_budget=cfg.repair_budget,
+                ls_moves=max(18, cfg.local_search_moves),
+                polish_moves=cfg.deep_polish_moves,
+            )
+            evals += 1
+            archive = non_dominated_insert(archive, shaken)
+            if dominance_key(shaken) < dominance_key(best):
+                best = shaken
+                improved_this_gen = True
+                shaken_perm = permutation_from_solution(shaken)
+                worst = max(range(len(population)), key=lambda idx: dominance_key(population[idx][1]))
+                population[worst] = (keys_from_permutation(shaken_perm, rng), shaken, cfg.fixed_F, cfg.fixed_CR)
         if cfg.diversity_restart and gen % 8 == 0 and div < 0.03 and evals < cfg.eval_budget:
             replace = max(1, len(population) // 6)
             for pos in sorted(range(len(population)), key=lambda idx: dominance_key(population[idx][1]), reverse=True)[:replace]:
@@ -581,6 +932,7 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 sol = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
                 evals += 1
                 population[pos] = (keys, sol, cfg.fixed_F, cfg.fixed_CR)
+        stagnation_gens = 0 if improved_this_gen else stagnation_gens + 1
     best.source = source_tag
     stats.eval_count = evals
     stats.archive_size_final = len(archive)

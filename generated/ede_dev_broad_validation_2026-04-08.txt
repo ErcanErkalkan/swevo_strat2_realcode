@@ -1,0 +1,37 @@
+EDE broad development validation
+date=2026-04-08
+
+Manifest and outputs:
+- manifest=configs/experiment_manifest_dev_broad.csv
+- runs=generated/master_runs_dev_broad.csv
+- run_summary=generated/master_runs_dev_broad_summary.txt
+- failures=generated/master_runs_dev_broad_failures.txt
+- validator=generated/validation_dev_broad.txt
+- summary=generated/dev_broad_summary.csv
+- stats=generated/dev_broad_stats.csv
+
+Coverage:
+- instances=C1_2_1,C2_2_1,R1_2_1,R2_2_1,RC1_2_1,RC2_2_1
+- scenarios=3
+- methods=EDE,ILS_MS,StdDE
+- seed=1
+- total_runs=54
+
+Execution quality:
+- completed=54
+- failed_runs=0
+- accepted_runs=54
+- strict_runs=54
+- real_source_rows=54
+
+Performance:
+- EDE vs ILS_MS: wins=9 losses=9 ties=0
+- EDE vs StdDE: wins=18 losses=0 ties=0
+- median_j: EDE=0.968085, ILS_MS=0.970827, StdDE=1.115700
+- EDE vs ILS_MS p_holm=0.34654998779296875
+- EDE vs StdDE p_holm=1.52587890625e-05
+
+Interpretation:
+- EDE is now competitive with ILS_MS on this broader medium development set
+- EDE is clearly better than StdDE
+- The EDE vs ILS_MS gap is not statistically significant on this development comparison

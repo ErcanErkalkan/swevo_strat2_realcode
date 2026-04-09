@@ -1,0 +1,27 @@
+EDE iteration report
+date=2026-04-08
+
+Code changes:
+- Added EDE trajectory intensification inside jde_evolve
+- Reserved evaluation budget for trajectory search during deep intensification
+- Enabled trajectory search only for EDE comparator
+
+Focused diagnostics:
+- C1_2_1 S1_balanced budget12: EDE=0.951137, ILS_MS=0.931065, A2_NoJDE=0.963664, A3_NoLNS=0.963664
+- C1_2_1 S1_balanced budget24: EDE=0.921340, ILS_MS=0.918574, A2_NoJDE=0.951137, A3_NoLNS=0.951137
+- RC1_2_1 S1_balanced budget12: EDE=0.955037, ILS_MS=0.938441, A2_NoJDE=0.963014, A3_NoLNS=0.963014
+- RC1_2_1 S1_balanced budget24: EDE=0.955037, ILS_MS=0.930955, A2_NoJDE=0.955038, A3_NoLNS=0.955038
+
+Development compare (27 runs, budget=12):
+- output=generated/master_runs_dev_compare.csv
+- summary=generated/dev_compare_summary.csv
+- stats=generated/dev_compare_stats.csv
+- EDE vs ILS_MS: wins=3 losses=6 ties=0
+- EDE vs StdDE: wins=9 losses=0 ties=0
+- median_j: EDE=0.989372, ILS_MS=0.938441, StdDE=1.102123
+- Holm: EDE vs ILS_MS p_holm=0.0390625; EDE vs StdDE p_holm=0.0078125
+
+Assessment:
+- EDE improved materially versus previous iteration
+- EDE now beats StdDE cleanly and closes part of the gap to ILS_MS
+- EDE is still statistically behind ILS_MS on this small development set
