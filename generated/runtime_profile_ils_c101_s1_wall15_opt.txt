@@ -1,0 +1,48 @@
+         6224517 function calls (6224490 primitive calls) in 14.476 seconds
+
+   Ordered by: cumulative time
+   List reduced from 244 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   15.169   15.169 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\comparators\base.py:28(run)
+        1    0.000    0.000   15.169   15.169 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\comparators\ils_ms.py:23(solve)
+        1    0.009    0.009   15.005   15.005 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:1276(ils_search)
+       30    0.225    0.007   12.958    0.432 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:373(decode_permutation)
+     2970    1.740    0.001   12.440    0.004 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:312(_candidate_insertions)
+    82794    4.227    0.000    7.187    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:27(evaluate_route)
+     1369    0.209    0.000    1.996    0.001 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:80(evaluate_solution)
+       29    0.104    0.004    1.947    0.067 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:441(try_improve_with_local_search)
+   681101    0.961    0.000    1.567    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:14(euclidean)
+    67723    1.131    0.000    1.366    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:251(_assemble_solution_from_route_update)
+   132704    0.615    0.000    1.237    0.000 {built-in method builtins.sum}
+    23492    0.067    0.000    1.134    0.000 {method 'mean' of 'numpy.ndarray' objects}
+    23492    0.455    0.000    1.067    0.000 C:\Users\Ercan\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\_core\_methods.py:115(_mean)
+    16304    0.098    0.000    0.744    0.000 {built-in method builtins.min}
+  1737046    0.718    0.000    0.718    0.000 {built-in method builtins.max}
+    91905    0.341    0.000    0.645    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:337(<lambda>)
+   681201    0.606    0.000    0.606    0.000 {built-in method math.hypot}
+   565790    0.323    0.000    0.323    0.000 {method 'get' of 'dict' objects}
+   565784    0.316    0.000    0.316    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:33(<genexpr>)
+    23652    0.313    0.000    0.313    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+        1    0.000    0.000    0.304    0.304 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:213(build_seed_references)
+     2970    0.197    0.000    0.267    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:234(_coverage_penalty_after_insertion)
+    23414    0.251    0.000    0.251    0.000 {built-in method numpy.array}
+    23492    0.194    0.000    0.249    0.000 C:\Users\Ercan\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\numpy\_core\_methods.py:73(_count_reduce_items)
+     2970    0.040    0.000    0.243    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:221(_route_totals)
+    16206    0.083    0.000    0.208    0.000 {built-in method builtins.sorted}
+   138269    0.124    0.000    0.202    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:103(<genexpr>)
+     5987    0.109    0.000    0.173    0.000 {method 'sort' of 'list' objects}
+        1    0.000    0.000    0.163    0.163 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\benchmark.py:381(build_problem)
+        1    0.000    0.000    0.163    0.163 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\benchmark.py:295(_try_load_public_instance)
+        1    0.000    0.000    0.160    0.160 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\benchmark.py:149(_candidate_instance_paths)
+        2    0.008    0.004    0.158    0.079 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\benchmark.py:124(_benchmark_file_index)
+    65287    0.066    0.000    0.116    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:339(<genexpr>)
+    50821    0.080    0.000    0.080    0.000 {method 'insert' of 'list' objects}
+110577/110565    0.079    0.000    0.079    0.000 {built-in method builtins.len}
+      788    0.002    0.000    0.072    0.000 C:\Users\Ercan\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:685(is_file)
+   170632    0.072    0.000    0.072    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\models.py:25(length)
+      788    0.068    0.000    0.070    0.000 {built-in method nt._path_isfile}
+    91905    0.066    0.000    0.066    0.000 C:\Users\Ercan\Drive'ım\swevo_strat2_realcode\src\swevo_suite\solver.py:18(customer_pos)
+   148503    0.066    0.000    0.066    0.000 {method 'add' of 'set' objects}
+
+

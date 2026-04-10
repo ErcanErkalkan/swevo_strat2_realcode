@@ -16,6 +16,7 @@ class EDEComparator(BaseComparator):
             population_size=pop,
             eval_budget=plan.eval_budget,
             seed=plan.seed,
+            walltime_cap_s=plan.walltime_cap_s,
             use_seed=True,
             use_jde=True,
             use_lns=True,

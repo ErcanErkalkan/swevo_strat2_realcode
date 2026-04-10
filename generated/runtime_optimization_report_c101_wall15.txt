@@ -1,0 +1,19 @@
+profile_case=C101 S1 seed1 real walltime=15s
+EDE_runtime_before=17.596820
+EDE_runtime_after=15.422223
+EDE_runtime_delta=-2.174598
+EDE_j_before=1.028504384783
+EDE_j_after=1.027236091878
+EDE_j_delta=-0.001268292905
+ILS_MS_runtime_before=16.789236
+ILS_MS_runtime_after=15.168673
+ILS_MS_runtime_delta=-1.620563
+ILS_MS_j_before=0.957685052277
+ILS_MS_j_after=0.896891076802
+ILS_MS_j_delta=-0.060793975475
+StdDE_runtime_before=15.459607
+StdDE_runtime_after=15.635952
+StdDE_runtime_delta=0.176345
+StdDE_j_before=1.216418599091
+StdDE_j_after=1.108923110379
+StdDE_j_delta=-0.107495488712

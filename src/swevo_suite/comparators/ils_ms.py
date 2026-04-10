@@ -15,6 +15,7 @@ class ILSMSComparator(BaseComparator):
             population_size=1,
             eval_budget=plan.eval_budget,
             seed=plan.seed,
+            walltime_cap_s=plan.walltime_cap_s,
             repair_budget=14,
             local_search_moves=28 if plan.customer_count <= 120 else 22 if plan.customer_count <= 240 else 18,
         )

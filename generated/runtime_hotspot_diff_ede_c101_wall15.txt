@@ -1,0 +1,22 @@
+profile_case=EDE C101 S1 seed1 real walltime=15s
+decode_permutation_before=16.737
+decode_permutation_after=10.654
+decode_permutation_delta=-6.083
+_candidate_insertions_before=16.524
+_candidate_insertions_after=10.287
+_candidate_insertions_delta=-6.237
+evaluate_solution_before=15.478
+evaluate_solution_after=4.106
+evaluate_solution_delta=-11.372
+initialize_population_before=14.398
+initialize_population_after=6.195
+initialize_population_delta=-8.203
+build_seed_references_before=2.896
+build_seed_references_after=0.302
+build_seed_references_delta=-2.594
+try_improve_with_local_search_before=0.271
+try_improve_with_local_search_after=1.953
+try_improve_with_local_search_delta=1.682
+deep_route_polish_before=0.251
+deep_route_polish_after=2.461
+deep_route_polish_delta=2.210

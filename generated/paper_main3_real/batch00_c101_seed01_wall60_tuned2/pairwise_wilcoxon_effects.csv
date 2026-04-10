@@ -1,0 +1,3 @@
+metric,control_method,compare_method,n_pairs,wilcoxon_stat,p_value,median_diff_control_minus_compare,rank_biserial,p_holm
+j_scaled_final,EDE,ILS_MS,3,0.0,0.25,0.020384458521323423,-1.0,0.5
+j_scaled_final,EDE,StdDE,3,0.0,0.25,-0.26306807786511255,1.0,0.5

@@ -1,0 +1,6 @@
+expected_runs=9
+produced_runs=9
+failed_runs=0
+accepted_runs=9
+strict_runs=9
+real_source_rows=9

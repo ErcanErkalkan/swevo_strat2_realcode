@@ -12,12 +12,12 @@ class AblationComparator(BaseComparator):
     def config_for_plan(self, plan):
         pop = default_population_size(plan.customer_count)
         if self.method_id == "A1_NoSeed":
-            return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, use_seed=False, use_jde=True, use_lns=True, lns_period=10, repair_budget=14, local_search_moves=24)
+            return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, walltime_cap_s=plan.walltime_cap_s, use_seed=False, use_jde=True, use_lns=True, lns_period=10, repair_budget=14, local_search_moves=24)
         if self.method_id == "A2_NoJDE":
-            return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, use_seed=True, use_jde=False, use_lns=True, lns_period=10, repair_budget=14, local_search_moves=24, fixed_F=0.72, fixed_CR=0.88)
+            return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, walltime_cap_s=plan.walltime_cap_s, use_seed=True, use_jde=False, use_lns=True, lns_period=10, repair_budget=14, local_search_moves=24, fixed_F=0.72, fixed_CR=0.88)
         if self.method_id == "A3_NoLNS":
-            return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, use_seed=True, use_jde=True, use_lns=False, lns_period=10, repair_budget=14, local_search_moves=24)
-        return MetaheuristicConfig(pop, plan.eval_budget, plan.seed)
+            return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, walltime_cap_s=plan.walltime_cap_s, use_seed=True, use_jde=True, use_lns=False, lns_period=10, repair_budget=14, local_search_moves=24)
+        return MetaheuristicConfig(pop, plan.eval_budget, plan.seed, walltime_cap_s=plan.walltime_cap_s)
 
     def solve(self, plan):
         problem = build_problem(plan, load_scenarios())

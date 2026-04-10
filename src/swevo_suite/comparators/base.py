@@ -16,6 +16,7 @@ class BaseComparator:
             population_size=default_population_size(plan.customer_count),
             eval_budget=plan.eval_budget,
             seed=plan.seed,
+            walltime_cap_s=plan.walltime_cap_s,
         )
 
     def solve(self, plan: RunPlan):

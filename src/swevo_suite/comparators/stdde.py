@@ -16,6 +16,7 @@ class StdDEComparator(BaseComparator):
             population_size=pop,
             eval_budget=plan.eval_budget,
             seed=plan.seed,
+            walltime_cap_s=plan.walltime_cap_s,
             use_seed=False,
             use_jde=False,
             use_lns=False,

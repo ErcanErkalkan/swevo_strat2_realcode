@@ -1,0 +1,10 @@
+compare_case=C101 seed1 scenarios=S1,S2,S3 walltime=60s finalburst_vs_ref
+EDE_reference=0.810338024564
+EDE_finalburst=0.810338024564
+EDE_delta=0.000000000000
+ILS_MS_reference=0.796660854538
+ILS_MS_finalburst=0.796660854538
+ILS_MS_delta=0.000000000000
+StdDE_reference=1.084113793452
+StdDE_finalburst=1.084113793452
+StdDE_delta=0.000000000000

@@ -1,0 +1,4 @@
+run_id=C101__S1_balanced__StdDE__seed01
+runtime_sec=15.635952399927191
+j_scaled_final=1.1089231103786157
+notes=real_solver:StdDE | archive=3 | walltime_hit=1 | init_best=1.108923 | problem_source=real | problem_path=data\benchmarks\solomon\solomon-100\In\c101.txt

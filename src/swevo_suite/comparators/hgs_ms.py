@@ -16,6 +16,7 @@ class HGSMSComparator(BaseComparator):
             population_size=pop,
             eval_budget=plan.eval_budget,
             seed=plan.seed,
+            walltime_cap_s=plan.walltime_cap_s,
             repair_budget=14,
             local_search_moves=24 if plan.customer_count <= 120 else 20 if plan.customer_count <= 240 else 16,
         )

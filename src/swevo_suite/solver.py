@@ -25,7 +25,7 @@ def route_signature(route: Route) -> Tuple[int, str, Tuple[int, ...]]:
 
 
 def evaluate_route(problem: ProblemInstance, route: Route) -> RouteMetrics:
-    shift = next(s for s in problem.shifts if s.idx == route.shift_id)
+    shift = problem.shifts[route.shift_id - 1]
     vehicle = problem.vehicle_types[route.vehicle_type]
     if not route.customers:
         return RouteMetrics()
@@ -130,6 +130,42 @@ def dominance_key(sol: Solution) -> tuple[float, float, float, float]:
     return (0.0 if sol.accepted else 1.0, sol.v_cap + sol.v_tw + sol.v_shift, sol.score, sol.overtime_sum)
 
 
+def _deadline_from_cap(walltime_cap_s: float | None) -> float | None:
+    if walltime_cap_s is None or walltime_cap_s <= 0:
+        return None
+    return time.perf_counter() + float(walltime_cap_s)
+
+
+def _time_exceeded(deadline: float | None) -> bool:
+    return deadline is not None and time.perf_counter() >= deadline
+
+
+def _phase_deadline(
+    start: float,
+    hard_deadline: float | None,
+    walltime_cap_s: float | None,
+    share: float,
+) -> float | None:
+    if hard_deadline is None or walltime_cap_s is None or walltime_cap_s <= 0:
+        return hard_deadline
+    if walltime_cap_s > 30:
+        return hard_deadline
+    soft_deadline = start + max(1.0, float(walltime_cap_s) * share)
+    return min(hard_deadline, soft_deadline)
+
+
+def _scaled_search_moves(base_moves: int, walltime_cap_s: float | None, *, minimum: int) -> int:
+    if walltime_cap_s is None or walltime_cap_s <= 0:
+        return base_moves
+    if walltime_cap_s <= 15:
+        return max(minimum, base_moves // 4)
+    if walltime_cap_s <= 30:
+        return max(minimum, base_moves // 3)
+    if walltime_cap_s <= 60:
+        return max(minimum, (base_moves * 3) // 4)
+    return base_moves
+
+
 def non_dominated_insert(archive: List[Solution], cand: Solution, max_size: int = 128) -> List[Solution]:
     if not cand.accepted:
         return archive
@@ -208,11 +244,104 @@ def build_seed_references(problem: ProblemInstance) -> tuple[float, float, float
     return (max(sol.cost, 1.0), max(sol.energy, 1.0), max(sol.co2, 1.0))
 
 
+def _route_totals(routes: Sequence[Route]) -> tuple[float, float, float, float, float, float, float, float]:
+    return (
+        sum(route.metrics.cost for route in routes),
+        sum(route.metrics.energy for route in routes),
+        sum(route.metrics.co2 for route in routes),
+        sum(route.metrics.overtime for route in routes),
+        sum(route.metrics.overtime_ratio for route in routes),
+        sum(route.metrics.v_cap for route in routes),
+        sum(route.metrics.v_tw for route in routes),
+        sum(route.metrics.v_shift for route in routes),
+    )
+
+
+def _coverage_penalty_after_insertion(problem: ProblemInstance, routes: Sequence[Route], cid: int) -> float:
+    seen: set[int] = set()
+    dupes = 0
+    cid_present = False
+    for route in routes:
+        for existing in route.customers:
+            if existing == cid:
+                cid_present = True
+            if existing in seen:
+                dupes += 1
+            else:
+                seen.add(existing)
+    adds_unique = 0 if cid_present else 1
+    missing = max(0, problem.customer_count - len(seen) - adds_unique)
+    return float(dupes + missing)
+
+
+def _assemble_solution_from_route_update(
+    problem: ProblemInstance,
+    routes: Sequence[Route],
+    references: tuple[float, float, float],
+    base_totals: tuple[float, float, float, float, float, float, float, float],
+    coverage_penalty: float,
+    replace_idx: int | None,
+    new_route: Route,
+) -> Solution:
+    base_cost, base_energy, base_co2, base_ot, base_ot_ratio, base_v_cap, base_v_tw, base_v_shift = base_totals
+    old_metrics = routes[replace_idx].metrics if replace_idx is not None else None
+    if old_metrics is not None:
+        total_cost = base_cost - old_metrics.cost + new_route.metrics.cost
+        total_energy = base_energy - old_metrics.energy + new_route.metrics.energy
+        total_co2 = base_co2 - old_metrics.co2 + new_route.metrics.co2
+        total_ot = base_ot - old_metrics.overtime + new_route.metrics.overtime
+        total_ot_ratio = base_ot_ratio - old_metrics.overtime_ratio + new_route.metrics.overtime_ratio
+        v_cap = base_v_cap - old_metrics.v_cap + new_route.metrics.v_cap
+        v_tw = base_v_tw - old_metrics.v_tw + new_route.metrics.v_tw
+        route_v_shift = base_v_shift - old_metrics.v_shift + new_route.metrics.v_shift
+        cand_routes = list(routes)
+        cand_routes[replace_idx] = new_route
+    else:
+        total_cost = base_cost + new_route.metrics.cost
+        total_energy = base_energy + new_route.metrics.energy
+        total_co2 = base_co2 + new_route.metrics.co2
+        total_ot = base_ot + new_route.metrics.overtime
+        total_ot_ratio = base_ot_ratio + new_route.metrics.overtime_ratio
+        v_cap = base_v_cap + new_route.metrics.v_cap
+        v_tw = base_v_tw + new_route.metrics.v_tw
+        route_v_shift = base_v_shift + new_route.metrics.v_shift
+        cand_routes = list(routes) + [new_route]
+
+    v_shift = route_v_shift + coverage_penalty
+    c_ref, e_ref, z_ref = references
+    wC, wE, wZ = problem.objective_weights
+    c_t = total_cost / max(c_ref, problem.epsilon)
+    e_t = total_energy / max(e_ref, problem.epsilon)
+    z_t = total_co2 / max(z_ref, problem.epsilon)
+    score = (wC * c_t + wE * e_t + wZ * z_t) / max(wC + wE + wZ, problem.epsilon)
+    score += problem.overtime_penalty * total_ot_ratio
+    accepted = v_cap <= 1e-9 and v_tw <= 1e-9 and v_shift <= 1e-9
+    if not accepted:
+        score += 1000.0 + 10.0 * (v_cap + v_tw + v_shift)
+    return Solution(
+        routes=cand_routes,
+        references=references,
+        score=score,
+        cost=total_cost,
+        energy=total_energy,
+        co2=total_co2,
+        overtime_sum=total_ot,
+        overtime_ratio_sum=total_ot_ratio,
+        v_cap=v_cap,
+        v_tw=v_tw,
+        v_shift=v_shift,
+        accepted=accepted,
+        strict_duty=accepted and total_ot <= 1e-9,
+    )
+
+
 def _candidate_insertions(problem: ProblemInstance, routes: Sequence[Route], cid: int, references: tuple[float, float, float]) -> List[Solution]:
     proposals: List[Solution] = []
     vehicle_names = ["HEV", "EV", "ICE"]
     cust = problem.customers[cid]
     cust_mid = 0.5 * (cust.tw_start + cust.tw_end)
+    base_totals = _route_totals(routes)
+    coverage_penalty = _coverage_penalty_after_insertion(problem, routes, cid)
 
     scored_routes = []
     for ridx, route in enumerate(routes):
@@ -234,14 +363,36 @@ def _candidate_insertions(problem: ProblemInstance, routes: Sequence[Route], cid
             nearest_idx = min(range(len(route.customers)), key=lambda i: euclidean((cust.x, cust.y), customer_pos(problem, route.customers[i])))
             pos_candidates.update({nearest_idx, nearest_idx + 1})
         for pos in sorted(p for p in pos_candidates if 0 <= p <= len(route.customers)):
-            new_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in routes]
-            new_routes[ridx].customers.insert(pos, cid)
-            proposals.append(evaluate_solution(problem, new_routes, references))
+            new_customers = list(route.customers)
+            new_customers.insert(pos, cid)
+            new_route = Route(route.shift_id, route.vehicle_type, new_customers)
+            new_route.metrics = evaluate_route(problem, new_route)
+            proposals.append(
+                _assemble_solution_from_route_update(
+                    problem,
+                    routes,
+                    references,
+                    base_totals,
+                    coverage_penalty,
+                    ridx,
+                    new_route,
+                )
+            )
     for shift in problem.shifts:
         for vehicle_name in vehicle_names[:2]:
-            new_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in routes]
-            new_routes.append(Route(shift.idx, vehicle_name, [cid]))
-            proposals.append(evaluate_solution(problem, new_routes, references))
+            new_route = Route(shift.idx, vehicle_name, [cid])
+            new_route.metrics = evaluate_route(problem, new_route)
+            proposals.append(
+                _assemble_solution_from_route_update(
+                    problem,
+                    routes,
+                    references,
+                    base_totals,
+                    coverage_penalty,
+                    None,
+                    new_route,
+                )
+            )
     return proposals
 
 
@@ -318,11 +469,14 @@ def try_improve_with_local_search(
     sol: Solution,
     references: tuple[float, float, float],
     max_moves: int = 32,
+    deadline: float | None = None,
 ) -> Solution:
     best = sol.copy()
     moves = 0
     improved = True
     while improved and moves < max_moves:
+        if _time_exceeded(deadline):
+            break
         improved = False
         # relocate
         for ridx, route in enumerate(best.routes):
@@ -331,6 +485,8 @@ def try_improve_with_local_search(
             for pos, cid in enumerate(list(route.customers)):
                 for tridx, troute in enumerate(best.routes):
                     for tpos in range(len(troute.customers) + 1):
+                        if _time_exceeded(deadline):
+                            return best
                         if ridx == tridx and (tpos == pos or tpos == pos + 1):
                             continue
                         cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
@@ -365,6 +521,8 @@ def try_improve_with_local_search(
                 rb = best.routes[sidx]
                 for ia, ca in enumerate(ra.customers):
                     for ib, cb in enumerate(rb.customers):
+                        if _time_exceeded(deadline):
+                            return best
                         if ridx == sidx and ia == ib:
                             continue
                         cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
@@ -390,9 +548,12 @@ def bounded_repair(
     references: tuple[float, float, float],
     stats: SearchStats,
     max_attempts: int = 16,
+    deadline: float | None = None,
 ) -> Solution:
     current = sol.copy()
     for _ in range(max_attempts):
+        if _time_exceeded(deadline):
+            break
         if current.accepted:
             break
         stats.n_repair_attempts += 1
@@ -429,6 +590,7 @@ def boundary_lns(
     rng: random.Random,
     destroy_frac: float = 0.18,
     ls_moves: int = 24,
+    deadline: float | None = None,
 ) -> Solution:
     boundary = route_boundary_customers(problem, sol)
     if not boundary:
@@ -444,10 +606,12 @@ def boundary_lns(
         removed_list.extend([cid for cid in route.customers if cid in removed])
     current = evaluate_solution(problem, base_routes, references)
     for cid in sorted(removed_list, key=lambda c: problem.customers[c].tw_start):
+        if _time_exceeded(deadline):
+            return current
         proposals = _candidate_insertions(problem, current.routes, cid, references)
         proposals.sort(key=dominance_key)
         current = proposals[0]
-    current = try_improve_with_local_search(problem, current, references, max_moves=ls_moves)
+    current = try_improve_with_local_search(problem, current, references, max_moves=ls_moves, deadline=deadline)
     return current
 
 
@@ -467,6 +631,50 @@ def critical_route_customers(problem: ProblemInstance, sol: Solution) -> List[in
             if slack < 0.08 * horizon:
                 critical.append(cid)
     return sorted(set(critical))
+
+
+def _swap_customers_in_perm(perm: list[int], a: int, b: int) -> None:
+    ia, ib = perm.index(a), perm.index(b)
+    perm[ia], perm[ib] = perm[ib], perm[ia]
+
+
+def ils_guided_permutation_from_solution(problem: ProblemInstance, sol: Solution, rng: random.Random) -> List[int]:
+    perm = permutation_from_solution(sol)
+    n = len(perm)
+    if n < 2:
+        return perm
+
+    border = route_boundary_customers(problem, sol)
+    critical = critical_route_customers(problem, sol)
+    if len(border) >= 2:
+        picks = rng.sample(border, min(len(border), 4 if n >= 40 else 2))
+        while len(picks) >= 2:
+            a = picks.pop()
+            b = picks.pop()
+            _swap_customers_in_perm(perm, a, b)
+    else:
+        swaps = 2 if n >= 80 else 1
+        for _ in range(swaps):
+            i, j = rng.sample(range(n), 2)
+            perm[i], perm[j] = perm[j], perm[i]
+
+    if critical:
+        mover = rng.choice(critical)
+        src = perm.index(mover)
+        radius = max(3, min(10, n // 12))
+        dst = min(n - 1, max(0, src + rng.randint(-radius, radius)))
+        customer = perm.pop(src)
+        perm.insert(dst, customer)
+
+    if n >= 6 and rng.random() < 0.45:
+        focus = critical if len(critical) >= 2 else perm
+        a, b = sorted(perm.index(cid) for cid in rng.sample(focus, 2))
+        if b - a >= 2:
+            span_limit = max(3, min(8, n // 10))
+            if b - a > span_limit:
+                b = a + span_limit
+            perm[a : b + 1] = reversed(perm[a : b + 1])
+    return perm
 
 
 def perturbed_permutation_from_solution(problem: ProblemInstance, sol: Solution, rng: random.Random) -> List[int]:
@@ -491,6 +699,7 @@ def deep_route_polish(
     sol: Solution,
     references: tuple[float, float, float],
     max_moves: int = 32,
+    deadline: float | None = None,
 ) -> Solution:
     def route_center(route: Route) -> tuple[float, float]:
         if not route.customers:
@@ -522,6 +731,8 @@ def deep_route_polish(
     moves = 0
     improved = True
     while improved and moves < max_moves:
+        if _time_exceeded(deadline):
+            break
         improved = False
         # Intra-route 2-opt
         for ridx, route in enumerate(best.routes):
@@ -530,6 +741,8 @@ def deep_route_polish(
                 continue
             for i in range(n - 2):
                 for j in range(i + 2, n + 1):
+                    if _time_exceeded(deadline):
+                        return best
                     cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
                     cand_routes[ridx].customers = (
                         cand_routes[ridx].customers[:i]
@@ -560,6 +773,8 @@ def deep_route_polish(
                     segment = route.customers[start : start + seg_len]
                     remaining = route.customers[:start] + route.customers[start + seg_len :]
                     for tpos in range(len(remaining) + 1):
+                        if _time_exceeded(deadline):
+                            return best
                         if tpos == start:
                             continue
                         reordered = remaining[:tpos] + segment + remaining[tpos:]
@@ -600,6 +815,8 @@ def deep_route_polish(
                         segment = src.customers[start : start + seg_len]
                         base_src = src.customers[:start] + src.customers[start + seg_len :]
                         for pos in sorted(p for p in dst_positions if 0 <= p <= len(dst.customers)):
+                            if _time_exceeded(deadline):
+                                return best
                             cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
                             cand_routes[src_idx].customers = list(base_src)
                             cand_routes[dst_idx].customers = cand_routes[dst_idx].customers[:pos] + list(segment) + cand_routes[dst_idx].customers[pos:]
@@ -631,6 +848,8 @@ def deep_route_polish(
                     seg_a = ra.customers[ia : ia + la]
                     rest_a = ra.customers[:ia] + ra.customers[ia + la :]
                     for ib in range(len(rb.customers) - lb + 1):
+                        if _time_exceeded(deadline):
+                            return best
                         seg_b = rb.customers[ib : ib + lb]
                         rest_b = rb.customers[:ib] + rb.customers[ib + lb :]
                         cand_routes = [Route(r.shift_id, r.vehicle_type, list(r.customers)) for r in best.routes]
@@ -660,17 +879,20 @@ def elite_route_perturbation(
     repair_budget: int,
     ls_moves: int,
     polish_moves: int = 0,
+    deadline: float | None = None,
 ) -> Solution:
     current = sol.copy()
     best = sol.copy()
     temperature = 0.03
     for _ in range(4):
+        if _time_exceeded(deadline):
+            break
         cand_perm = perturbed_permutation_from_solution(problem, current, rng)
         cand = evaluate_solution(problem, decode_permutation(problem, cand_perm, references), references)
-        cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2))
-        cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves)
+        cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2), deadline=deadline)
+        cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves, deadline=deadline)
         if polish_moves > 0:
-            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves)
+            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves, deadline=deadline)
         delta = cand.score - current.score
         if dominance_key(cand) < dominance_key(current) or rng.random() < math.exp(-max(0.0, delta) / max(temperature, 1e-6)):
             current = cand
@@ -690,12 +912,15 @@ def trajectory_intensification(
     repair_budget: int,
     ls_moves: int,
     polish_moves: int = 0,
+    deadline: float | None = None,
 ) -> tuple[Solution, Solution, list[Solution]]:
     current = seed_sol.copy()
     best = seed_sol.copy()
     generated: list[Solution] = []
     temperature = 0.035
     for step in range(iterations):
+        if _time_exceeded(deadline):
+            break
         if step % 3 == 0:
             cand = boundary_lns(
                 problem,
@@ -704,15 +929,16 @@ def trajectory_intensification(
                 rng,
                 destroy_frac=0.14 if problem.customer_count <= 120 else 0.10,
                 ls_moves=max(18, ls_moves // 2),
+                deadline=deadline,
             )
         else:
             perm = perturbed_permutation_from_solution(problem, current, rng)
             cand = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
             if not cand.accepted:
-                cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2))
-            cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves)
+                cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2), deadline=deadline)
+            cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves, deadline=deadline)
         if polish_moves > 0:
-            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves)
+            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves, deadline=deadline)
         generated.append(cand)
         delta = cand.score - current.score
         if dominance_key(cand) < dominance_key(current) or rng.random() < math.exp(-max(0.0, delta) / max(temperature, 1e-6)):
@@ -723,11 +949,56 @@ def trajectory_intensification(
     return best, current, generated
 
 
+def incumbent_ils_burst(
+    problem: ProblemInstance,
+    seed_sol: Solution,
+    references: tuple[float, float, float],
+    rng: random.Random,
+    stats: SearchStats,
+    iterations: int,
+    repair_budget: int,
+    ls_moves: int,
+    polish_moves: int = 0,
+    deadline: float | None = None,
+) -> tuple[Solution, Solution, list[Solution]]:
+    current = seed_sol.copy()
+    best = seed_sol.copy()
+    generated: list[Solution] = []
+    temperature = 0.05
+    for _ in range(iterations):
+        if _time_exceeded(deadline):
+            break
+        perm = permutation_from_solution(current)
+        border = route_boundary_customers(problem, current)
+        if len(border) >= 2:
+            a, b = rng.sample(border, 2)
+            _swap_customers_in_perm(perm, a, b)
+        else:
+            for _ in range(max(2, problem.customer_count // 35)):
+                i, j = rng.sample(range(problem.customer_count), 2)
+                perm[i], perm[j] = perm[j], perm[i]
+        cand = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
+        if not cand.accepted:
+            cand = bounded_repair(problem, cand, references, stats, max_attempts=max(4, repair_budget // 2), deadline=deadline)
+        cand = try_improve_with_local_search(problem, cand, references, max_moves=ls_moves, deadline=deadline)
+        if polish_moves > 0:
+            cand = deep_route_polish(problem, cand, references, max_moves=polish_moves, deadline=deadline)
+        generated.append(cand)
+        delta = cand.score - current.score
+        if dominance_key(cand) < dominance_key(current) or rng.random() < math.exp(-max(0.0, delta) / max(temperature, 1e-6)):
+            current = cand
+        if dominance_key(cand) < dominance_key(best):
+            best = cand
+        temperature *= 0.94
+    return best, current, generated
+
+
 @dataclass
 class MetaheuristicConfig:
     population_size: int
     eval_budget: int
     seed: int
+    walltime_cap_s: float | None = None
     use_seed: bool = True
     use_jde: bool = True
     use_lns: bool = True
@@ -755,40 +1026,82 @@ def ede_population_size(cfg: MetaheuristicConfig) -> int:
     if cfg.eval_budget <= 6:
         return min(cfg.population_size, 4)
     target = max(4, min(12, cfg.eval_budget // 3))
+    if cfg.walltime_cap_s is not None and cfg.walltime_cap_s > 0:
+        if cfg.walltime_cap_s <= 30:
+            target = min(target, 6)
+        elif cfg.walltime_cap_s <= 60:
+            target = min(target, 8)
     return min(cfg.population_size, target)
 
 
-def initialize_population(problem: ProblemInstance, references: tuple[float, float, float], cfg: MetaheuristicConfig) -> list[tuple[np.ndarray, Solution, float, float]]:
+def initialize_population(
+    problem: ProblemInstance,
+    references: tuple[float, float, float],
+    cfg: MetaheuristicConfig,
+    deadline: float | None = None,
+) -> list[tuple[np.ndarray, Solution, float, float]]:
     rng = random.Random(cfg.seed)
     n = problem.customer_count
     target_population = ede_population_size(cfg)
+    local_moves = _scaled_search_moves(cfg.local_search_moves, cfg.walltime_cap_s, minimum=6)
+    deep_moves = _scaled_search_moves(cfg.deep_polish_moves, cfg.walltime_cap_s, minimum=4) if cfg.deep_polish_moves > 0 else 0
     if cfg.deep_intensify:
         reserve = max(2, cfg.eval_budget // 3) if cfg.use_trajectory_search else 2
         target_population = min(cfg.population_size, max(target_population, min(max(5, cfg.eval_budget - reserve), 9)))
+    if cfg.walltime_cap_s is not None and cfg.walltime_cap_s > 0:
+        if cfg.walltime_cap_s <= 30:
+            target_population = min(target_population, 6)
+        elif cfg.walltime_cap_s <= 60:
+            target_population = min(target_population, 8)
     population: list[tuple[np.ndarray, Solution, float, float]] = []
     if cfg.use_seed:
         seed_perm = seed_permutation(problem, rng)
         keys = keys_from_permutation(seed_perm, rng)
         sol = evaluate_solution(problem, decode_permutation(problem, seed_perm, references), references)
-        sol = bounded_repair(problem, sol, references, SearchStats(), max_attempts=cfg.repair_budget)
-        sol = try_improve_with_local_search(problem, sol, references, max_moves=cfg.local_search_moves)
-        if cfg.deep_polish_moves > 0:
-            sol = deep_route_polish(problem, sol, references, max_moves=cfg.deep_polish_moves)
+        sol = bounded_repair(problem, sol, references, SearchStats(), max_attempts=cfg.repair_budget, deadline=deadline)
+        sol = try_improve_with_local_search(problem, sol, references, max_moves=local_moves, deadline=deadline)
+        if deep_moves > 0:
+            sol = deep_route_polish(problem, sol, references, max_moves=deep_moves, deadline=deadline)
+        if cfg.deep_intensify and not _time_exceeded(deadline):
+            seed_walk_iters = 2 if cfg.walltime_cap_s is not None and cfg.walltime_cap_s <= 60 else 3
+            seed_best, _, _ = incumbent_ils_burst(
+                problem,
+                sol,
+                references,
+                rng,
+                SearchStats(),
+                iterations=seed_walk_iters,
+                repair_budget=cfg.repair_budget,
+                ls_moves=max(10, local_moves),
+                polish_moves=max(0, deep_moves // 2),
+                deadline=deadline,
+            )
+            if dominance_key(seed_best) < dominance_key(sol):
+                sol = seed_best
         population.append((keys, sol, cfg.fixed_F, cfg.fixed_CR))
         anchor_sol = sol
         anchored_variants = target_population - 1 if cfg.deep_intensify else min(target_population - 1, 4 if problem.customer_count <= 120 else 6)
+        if cfg.walltime_cap_s is not None and cfg.walltime_cap_s > 0:
+            if cfg.walltime_cap_s <= 30:
+                anchored_variants = min(anchored_variants, 2)
+            elif cfg.walltime_cap_s <= 60:
+                anchored_variants = min(anchored_variants, 3)
+            elif cfg.walltime_cap_s <= 300:
+                anchored_variants = min(anchored_variants, 4)
         for _ in range(max(0, anchored_variants)):
+            if _time_exceeded(deadline):
+                return population
             pert_perm = perturbed_permutation_from_solution(problem, anchor_sol, rng)
             pert_keys = keys_from_permutation(pert_perm, rng)
             pert_sol = evaluate_solution(problem, decode_permutation(problem, pert_perm, references), references)
-            pert_sol = bounded_repair(problem, pert_sol, references, SearchStats(), max_attempts=max(4, cfg.repair_budget // 2))
-            pert_sol = try_improve_with_local_search(problem, pert_sol, references, max_moves=cfg.local_search_moves)
-            if cfg.deep_polish_moves > 0:
-                pert_sol = deep_route_polish(problem, pert_sol, references, max_moves=cfg.deep_polish_moves)
+            pert_sol = bounded_repair(problem, pert_sol, references, SearchStats(), max_attempts=max(4, cfg.repair_budget // 2), deadline=deadline)
+            pert_sol = try_improve_with_local_search(problem, pert_sol, references, max_moves=local_moves, deadline=deadline)
+            if deep_moves > 0:
+                pert_sol = deep_route_polish(problem, pert_sol, references, max_moves=deep_moves, deadline=deadline)
             population.append((pert_keys, pert_sol, cfg.fixed_F, cfg.fixed_CR))
             if dominance_key(pert_sol) < dominance_key(anchor_sol):
                 anchor_sol = pert_sol
-    while len(population) < target_population:
+    while len(population) < target_population and not _time_exceeded(deadline):
         perm = list(problem.customer_ids)
         rng.shuffle(perm)
         if population and rng.random() < 0.55:
@@ -800,17 +1113,34 @@ def initialize_population(problem: ProblemInstance, references: tuple[float, flo
             perm = anchor
         keys = keys_from_permutation(perm, rng)
         sol = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
-        sol = bounded_repair(problem, sol, references, SearchStats(), max_attempts=max(2, cfg.repair_budget // 2))
+        sol = bounded_repair(problem, sol, references, SearchStats(), max_attempts=max(2, cfg.repair_budget // 2), deadline=deadline)
         population.append((keys, sol, cfg.fixed_F, cfg.fixed_CR))
     return population
 
 
 def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: str = "EDE") -> tuple[Solution, SearchStats, list[Solution]]:
     rng = random.Random(cfg.seed)
+    deadline = _deadline_from_cap(cfg.walltime_cap_s)
+    start = time.perf_counter()
+    init_deadline = _phase_deadline(start, deadline, cfg.walltime_cap_s, 0.10)
+    trajectory_deadline = _phase_deadline(start, deadline, cfg.walltime_cap_s, 0.30)
+    main_deadline = deadline
+    if cfg.walltime_cap_s is not None and 30 < cfg.walltime_cap_s <= 120:
+        main_deadline = _phase_deadline(start, deadline, cfg.walltime_cap_s, 0.88)
+    evolve_local_moves = _scaled_search_moves(cfg.local_search_moves, cfg.walltime_cap_s, minimum=6)
+    lns_moves = max(8, evolve_local_moves // 2)
+    shake_moves = max(10, evolve_local_moves)
+    trajectory_moves = max(12, evolve_local_moves)
+    trajectory_polish = _scaled_search_moves(cfg.deep_polish_moves, cfg.walltime_cap_s, minimum=4) if cfg.deep_polish_moves > 0 else 0
     references = build_seed_references(problem)
     stats = SearchStats()
-    start = time.perf_counter()
-    population = initialize_population(problem, references, cfg)
+    population = initialize_population(problem, references, cfg, deadline=init_deadline)
+    if not population:
+        perm = list(problem.customer_ids)
+        rng.shuffle(perm)
+        keys = keys_from_permutation(perm, rng)
+        sol = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
+        population = [(keys, sol, cfg.fixed_F, cfg.fixed_CR)]
     archive: list[Solution] = []
     best = min((p[1] for p in population), key=dominance_key)
     init_best = best.score
@@ -820,8 +1150,12 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
         if sol.accepted and stats.first_feasible_eval is None:
             stats.first_feasible_eval = idx
             stats.first_feasible_sec = time.perf_counter() - start
-    if cfg.use_trajectory_search and evals < cfg.eval_budget:
-        traj_iters = min(max(2, cfg.eval_budget // 4), cfg.eval_budget - evals)
+    if cfg.use_trajectory_search and evals < cfg.eval_budget and not _time_exceeded(trajectory_deadline):
+        if cfg.walltime_cap_s is not None and cfg.walltime_cap_s > 0 and cfg.walltime_cap_s <= 30:
+            traj_cap = 8 if problem.customer_count <= 120 else 12 if problem.customer_count <= 240 else 16
+            traj_iters = min(max(4, traj_cap), cfg.eval_budget - evals)
+        else:
+            traj_iters = min(max(2, cfg.eval_budget // 4), cfg.eval_budget - evals)
         t_best, _, generated = trajectory_intensification(
             problem,
             best,
@@ -830,8 +1164,9 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
             stats,
             iterations=traj_iters,
             repair_budget=cfg.repair_budget,
-            ls_moves=max(cfg.local_search_moves, 22),
-            polish_moves=cfg.deep_polish_moves,
+            ls_moves=trajectory_moves,
+            polish_moves=trajectory_polish,
+            deadline=trajectory_deadline,
         )
         for cand in generated:
             evals += 1
@@ -846,7 +1181,11 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
             population[worst] = (keys_from_permutation(best_perm, rng), best, cfg.fixed_F, cfg.fixed_CR)
     gen = 0
     stagnation_gens = 0
-    while evals < cfg.eval_budget:
+    if len(population) < 4:
+        stats.note("population_truncated=1")
+    while evals < cfg.eval_budget and not _time_exceeded(main_deadline):
+        if len(population) < 4:
+            break
         gen += 1
         improved_this_gen = False
         pop_scores = [p[1].score for p in population]
@@ -854,6 +1193,8 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
         best_keys = keys_from_permutation(permutation_from_solution(best), rng)
         for i in range(len(population)):
             if evals >= cfg.eval_budget:
+                break
+            if _time_exceeded(main_deadline):
                 break
             idxs = list(range(len(population)))
             idxs.remove(i)
@@ -881,8 +1222,8 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
             perm = permutation_from_keys(trial)
             cand = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
             if not cand.accepted:
-                cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget)
-            cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves)
+                cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget, deadline=main_deadline)
+            cand = try_improve_with_local_search(problem, cand, references, max_moves=evolve_local_moves, deadline=main_deadline)
             evals += 1
             if cand.accepted and stats.first_feasible_eval is None:
                 stats.first_feasible_eval = evals
@@ -895,14 +1236,14 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                     improved_this_gen = True
             else:
                 stats.n_rejected_offspring += 1
-        if cfg.use_lns and gen % max(1, cfg.lns_period) == 0 and evals < cfg.eval_budget:
-            lns_sol = boundary_lns(problem, best, references, rng, destroy_frac=0.16 if problem.customer_count <= 120 else 0.12, ls_moves=max(16, cfg.local_search_moves // 2))
+        if cfg.use_lns and gen % max(1, cfg.lns_period) == 0 and evals < cfg.eval_budget and not _time_exceeded(main_deadline):
+            lns_sol = boundary_lns(problem, best, references, rng, destroy_frac=0.16 if problem.customer_count <= 120 else 0.12, ls_moves=lns_moves, deadline=main_deadline)
             evals += 1
             archive = non_dominated_insert(archive, lns_sol)
             if dominance_key(lns_sol) < dominance_key(best):
                 best = lns_sol
                 improved_this_gen = True
-        if cfg.use_jde and cfg.use_lns and stagnation_gens >= 2 and evals < cfg.eval_budget:
+        if cfg.use_jde and cfg.use_lns and stagnation_gens >= 2 and evals < cfg.eval_budget and not _time_exceeded(main_deadline):
             shaken = elite_route_perturbation(
                 problem,
                 best,
@@ -910,8 +1251,9 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 rng,
                 stats,
                 repair_budget=cfg.repair_budget,
-                ls_moves=max(18, cfg.local_search_moves),
-                polish_moves=cfg.deep_polish_moves,
+                ls_moves=shake_moves,
+                polish_moves=trajectory_polish,
+                deadline=main_deadline,
             )
             evals += 1
             archive = non_dominated_insert(archive, shaken)
@@ -921,9 +1263,11 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 shaken_perm = permutation_from_solution(shaken)
                 worst = max(range(len(population)), key=lambda idx: dominance_key(population[idx][1]))
                 population[worst] = (keys_from_permutation(shaken_perm, rng), shaken, cfg.fixed_F, cfg.fixed_CR)
-        if cfg.diversity_restart and gen % 8 == 0 and div < 0.03 and evals < cfg.eval_budget:
+        if cfg.diversity_restart and gen % 8 == 0 and div < 0.03 and evals < cfg.eval_budget and not _time_exceeded(main_deadline):
             replace = max(1, len(population) // 6)
             for pos in sorted(range(len(population)), key=lambda idx: dominance_key(population[idx][1]), reverse=True)[:replace]:
+                if _time_exceeded(main_deadline):
+                    break
                 perm = permutation_from_solution(best)
                 for _ in range(max(2, problem.customer_count // 25)):
                     a, b = rng.randrange(problem.customer_count), rng.randrange(problem.customer_count)
@@ -933,21 +1277,52 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 evals += 1
                 population[pos] = (keys, sol, cfg.fixed_F, cfg.fixed_CR)
         stagnation_gens = 0 if improved_this_gen else stagnation_gens + 1
+    if (
+        cfg.use_jde
+        and cfg.walltime_cap_s is not None
+        and 30 < cfg.walltime_cap_s <= 120
+        and evals < cfg.eval_budget
+        and not _time_exceeded(deadline)
+    ):
+        burst_iters = min(6 if problem.customer_count <= 120 else 4, cfg.eval_budget - evals)
+        b_best, _, generated = incumbent_ils_burst(
+            problem,
+            best,
+            references,
+            rng,
+            stats,
+            iterations=burst_iters,
+            repair_budget=cfg.repair_budget,
+            ls_moves=max(10, evolve_local_moves),
+            polish_moves=max(0, trajectory_polish // 2),
+            deadline=deadline,
+        )
+        for cand in generated:
+            evals += 1
+            archive = non_dominated_insert(archive, cand)
+            if cand.accepted and stats.first_feasible_eval is None:
+                stats.first_feasible_eval = evals
+                stats.first_feasible_sec = time.perf_counter() - start
+        if dominance_key(b_best) < dominance_key(best):
+            best = b_best
     best.source = source_tag
     stats.eval_count = evals
     stats.archive_size_final = len(archive)
+    if _time_exceeded(deadline):
+        stats.note("walltime_hit=1")
     stats.note(f"init_best={init_best:.6f}")
     return best, stats, archive
 
 
 def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solution, SearchStats, list[Solution]]:
+    start = time.perf_counter()
+    deadline = _deadline_from_cap(cfg.walltime_cap_s)
     references = build_seed_references(problem)
     stats = SearchStats()
     rng = random.Random(cfg.seed)
-    start = time.perf_counter()
     seed_sol = evaluate_solution(problem, decode_permutation(problem, seed_permutation(problem, rng), references), references)
-    current = bounded_repair(problem, seed_sol, references, stats, max_attempts=cfg.repair_budget)
-    current = try_improve_with_local_search(problem, current, references, max_moves=cfg.local_search_moves)
+    current = bounded_repair(problem, seed_sol, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
+    current = try_improve_with_local_search(problem, current, references, max_moves=cfg.local_search_moves, deadline=deadline)
     best = current
     archive = non_dominated_insert([], best)
     destroy_names = ["random", "worst", "related", "border"]
@@ -956,7 +1331,7 @@ def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Sol
     if best.accepted:
         stats.first_feasible_eval = evals
         stats.first_feasible_sec = time.perf_counter() - start
-    while evals < cfg.eval_budget:
+    while evals < cfg.eval_budget and not _time_exceeded(deadline):
         names, probs = zip(*[(n, w / sum(weights.values())) for n, w in weights.items()])
         op = rng.choices(names, weights=probs, k=1)[0]
         removed_count = max(2, int(problem.customer_count * (0.06 if problem.customer_count <= 120 else 0.04)))
@@ -966,6 +1341,8 @@ def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Sol
         elif op == "worst":
             contrib = []
             for cid in perm:
+                if _time_exceeded(deadline):
+                    break
                 temp = [x for x in perm if x != cid]
                 sol = evaluate_solution(problem, decode_permutation(problem, temp, references), references)
                 evals += 1
@@ -991,10 +1368,10 @@ def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Sol
             inserts.sort(key=dominance_key)
             cand = inserts[0]
             evals += 1
-            if evals >= cfg.eval_budget:
+            if evals >= cfg.eval_budget or _time_exceeded(deadline):
                 break
-        cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget)
-        cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves)
+        cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
+        cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves, deadline=deadline)
         archive = non_dominated_insert(archive, cand)
         if dominance_key(cand) < dominance_key(best):
             best = cand
@@ -1012,6 +1389,8 @@ def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Sol
             stats.first_feasible_sec = time.perf_counter() - start
     stats.eval_count = evals
     stats.archive_size_final = len(archive)
+    if _time_exceeded(deadline):
+        stats.note("walltime_hit=1")
     return best, stats, archive
 
 
@@ -1031,14 +1410,16 @@ def order_crossover(p1: list[int], p2: list[int], rng: random.Random) -> list[in
 
 def hgs_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solution, SearchStats, list[Solution]]:
     rng = random.Random(cfg.seed)
+    deadline = _deadline_from_cap(cfg.walltime_cap_s)
+    start = time.perf_counter()
     references = build_seed_references(problem)
     stats = SearchStats()
     pop_size = min(cfg.population_size, max(8, min(cfg.eval_budget, 20)))
     population: list[tuple[list[int], Solution]] = []
     seed_perm = seed_permutation(problem, rng)
     seed_sol = evaluate_solution(problem, decode_permutation(problem, seed_perm, references), references)
-    population.append((seed_perm, try_improve_with_local_search(problem, seed_sol, references, max_moves=cfg.local_search_moves)))
-    while len(population) < pop_size:
+    population.append((seed_perm, try_improve_with_local_search(problem, seed_sol, references, max_moves=cfg.local_search_moves, deadline=deadline)))
+    while len(population) < pop_size and not _time_exceeded(deadline):
         perm = list(problem.customer_ids)
         rng.shuffle(perm)
         sol = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
@@ -1048,15 +1429,15 @@ def hgs_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
     for _, sol in population:
         archive = non_dominated_insert(archive, sol)
     evals = len(population)
-    while evals < cfg.eval_budget:
+    while evals < cfg.eval_budget and not _time_exceeded(deadline):
         parents = rng.sample(population, 2)
         child_perm = order_crossover(parents[0][0], parents[1][0], rng)
         for _ in range(max(1, problem.customer_count // 40)):
             a, b = rng.sample(range(problem.customer_count), 2)
             child_perm[a], child_perm[b] = child_perm[b], child_perm[a]
         child_sol = evaluate_solution(problem, decode_permutation(problem, child_perm, references), references)
-        child_sol = bounded_repair(problem, child_sol, references, stats, max_attempts=cfg.repair_budget)
-        child_sol = try_improve_with_local_search(problem, child_sol, references, max_moves=cfg.local_search_moves)
+        child_sol = bounded_repair(problem, child_sol, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
+        child_sol = try_improve_with_local_search(problem, child_sol, references, max_moves=cfg.local_search_moves, deadline=deadline)
         evals += 1
         archive = non_dominated_insert(archive, child_sol)
         population.append((child_perm, child_sol))
@@ -1066,6 +1447,8 @@ def hgs_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
             best = child_sol
     stats.eval_count = evals
     stats.archive_size_final = len(archive)
+    if _time_exceeded(deadline):
+        stats.note("walltime_hit=1")
     return best, stats, archive
 
 
@@ -1083,17 +1466,19 @@ def diversity_penalty(perm: list[int], population: list[tuple[list[int], Solutio
 
 def ils_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solution, SearchStats, list[Solution]]:
     rng = random.Random(cfg.seed)
+    deadline = _deadline_from_cap(cfg.walltime_cap_s)
+    start = time.perf_counter()
     references = build_seed_references(problem)
     stats = SearchStats()
     perm = seed_permutation(problem, rng)
     current = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
-    current = bounded_repair(problem, current, references, stats, max_attempts=cfg.repair_budget)
-    current = try_improve_with_local_search(problem, current, references, max_moves=cfg.local_search_moves * 2)
+    current = bounded_repair(problem, current, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
+    current = try_improve_with_local_search(problem, current, references, max_moves=cfg.local_search_moves * 2, deadline=deadline)
     best = current
     archive = non_dominated_insert([], best)
     evals = 1
     temperature = 0.05
-    while evals < cfg.eval_budget:
+    while evals < cfg.eval_budget and not _time_exceeded(deadline):
         base_perm = permutation_from_solution(current)
         # shift-border perturbation
         border = route_boundary_customers(problem, current)
@@ -1106,8 +1491,8 @@ def ils_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
                 i, j = rng.sample(range(problem.customer_count), 2)
                 base_perm[i], base_perm[j] = base_perm[j], base_perm[i]
         cand = evaluate_solution(problem, decode_permutation(problem, base_perm, references), references)
-        cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget)
-        cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves)
+        cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
+        cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves, deadline=deadline)
         evals += 1
         archive = non_dominated_insert(archive, cand)
         delta = cand.score - current.score
@@ -1120,4 +1505,6 @@ def ils_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
         temperature *= 0.996
     stats.eval_count = evals
     stats.archive_size_final = len(archive)
+    if _time_exceeded(deadline):
+        stats.note("walltime_hit=1")
     return best, stats, archive

@@ -1,0 +1,10 @@
+compare_case=C101 seed1 scenarios=S1,S2,S3 walltime=60s
+EDE_median_j_before=0.810338024564
+EDE_median_j_after=0.939323918812
+EDE_median_j_delta=0.128985894248
+ILS_MS_median_j_before=0.817527205655
+ILS_MS_median_j_after=0.795110001794
+ILS_MS_median_j_delta=-0.022417203860
+StdDE_median_j_before=1.059631960891
+StdDE_median_j_after=1.087121539011
+StdDE_median_j_delta=0.027489578120
