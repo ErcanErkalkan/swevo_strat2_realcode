@@ -29,6 +29,10 @@ BENCHMARK_ROOT = ROOT / "data" / "benchmarks"
 INSTANCE_SUFFIXES = {".txt", ".vrp", ".csv"}
 
 
+class InvalidBenchmarkInstanceId(FileNotFoundError):
+    """Raised when a manifest row names an instance that is not in the public set."""
+
+
 def _stable_seed(*parts: object) -> int:
     h = hashlib.sha256("::".join(str(p) for p in parts).encode("utf-8")).hexdigest()
     return int(h[:16], 16) & 0x7FFFFFFF
@@ -119,6 +123,37 @@ def _instance_family_dir(family: str) -> str:
     if "li" in fam:
         return "li_lim"
     return fam
+
+
+def _solomon_public_instance_ids() -> frozenset[str]:
+    instance_ids: set[str] = set()
+    instance_ids.update(f"C{idx}" for idx in range(101, 110))
+    instance_ids.update(f"C{idx}" for idx in range(201, 209))
+    instance_ids.update(f"R{idx}" for idx in range(101, 113))
+    instance_ids.update(f"R{idx}" for idx in range(201, 212))
+    instance_ids.update(f"RC{idx}" for idx in range(101, 109))
+    instance_ids.update(f"RC{idx}" for idx in range(201, 209))
+    return frozenset(instance_ids)
+
+
+KNOWN_PUBLIC_INSTANCE_IDS = {
+    "solomon": _solomon_public_instance_ids(),
+}
+
+
+def public_instance_id_error(plan: RunPlan) -> str | None:
+    family_key = _instance_family_dir(plan.benchmark_family)
+    instance_id = plan.instance_id.upper()
+    if family_key == "solomon" and plan.customer_count == 100:
+        valid_ids = KNOWN_PUBLIC_INSTANCE_IDS["solomon"]
+        if instance_id not in valid_ids:
+            return (
+                f"{plan.instance_id} is not part of the public Solomon-100 benchmark set. "
+                "Valid mixed-instance ids are RC101-RC108 and RC201-RC208."
+                if instance_id.startswith("RC")
+                else f"{plan.instance_id} is not part of the public Solomon-100 benchmark set."
+            )
+    return None
 
 
 @lru_cache(maxsize=None)
@@ -389,6 +424,9 @@ def build_problem(
     if real_problem is not None:
         return real_problem
     if require_real if require_real is not None else _env_truthy("SWEVO_REQUIRE_REAL_BENCHMARKS"):
+        invalid_public_id = public_instance_id_error(plan)
+        if invalid_public_id is not None:
+            raise InvalidBenchmarkInstanceId(invalid_public_id)
         roots = ", ".join(str(root) for root in _search_roots(plan))
         raise FileNotFoundError(
             f"No real benchmark file found for {plan.instance_id} (family={plan.benchmark_family}) under: {roots}"

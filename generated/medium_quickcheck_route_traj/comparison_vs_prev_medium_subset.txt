@@ -1,0 +1,13 @@
+compare_case=medium_quickcheck_route_traj subset_vs_previous_medium_compare
+subset_runs=18
+EDE_previous_subset=0.949135181891
+EDE_route_traj=0.878141106285
+EDE_delta=-0.070994075606
+ILS_MS_previous_subset=0.926464500090
+ILS_MS_route_traj=0.882979997644
+ILS_MS_delta=-0.043484502446
+StdDE_previous_subset=1.156096779723
+StdDE_route_traj=1.099288055750
+StdDE_delta=-0.056808723973
+C1_2_1: EDE_median_delta=-0.064733308637
+RC1_2_1: EDE_median_delta=-0.068389993924

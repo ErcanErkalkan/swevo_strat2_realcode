@@ -1,0 +1,13 @@
+compare_case=C101 seed1 scenarios=S1_balanced,S2_peak_dirty,S3_mixed_fleet_arc walltime=60s route_traj_vs_ref
+EDE_reference=0.810338024564
+EDE_route_traj=0.808455107647
+EDE_delta=-0.001882916917
+ILS_MS_reference=0.796660854538
+ILS_MS_route_traj=0.795110001794
+ILS_MS_delta=-0.001550852744
+StdDE_reference=1.084113793452
+StdDE_route_traj=1.084113793452
+StdDE_delta=0.000000000000
+S1_balanced: route_traj_minus_ref=-0.024362710824
+S2_peak_dirty: route_traj_minus_ref=0.016194572595
+S3_mixed_fleet_arc: route_traj_minus_ref=-0.069111750004

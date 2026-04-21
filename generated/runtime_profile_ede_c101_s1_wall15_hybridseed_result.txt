@@ -1,0 +1,4 @@
+run_id=C101__S1_balanced__EDE__seed01
+runtime_sec=15.14693940000052
+j_scaled_final=0.9247151369735226
+notes=real_solver:EDE | archive=5 | walltime_hit=1 | init_best=1.028504 | problem_source=real | problem_path=data\benchmarks\solomon\solomon-100\In\c101.txt

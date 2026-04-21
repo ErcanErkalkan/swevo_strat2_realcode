@@ -1,0 +1,11 @@
+batch=batch00_c101_seed01_wall60_route_traj
+manifest=configs/paper_main3_real_batches/experiment_manifest_paper_main3_real_batch00_c101_seed01_wall60.csv
+produced_runs=9
+failed_runs=0
+accepted_runs=9
+strict_runs=9
+real_source_runs=9
+walltime_hits=9
+median_j_EDE=0.808455107647
+median_j_ILS_MS=0.795110001794
+median_j_StdDE=1.084113793452

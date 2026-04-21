@@ -16,11 +16,17 @@ def main() -> None:
     args = parser.parse_args()
     ensure_generated_dirs()
     df = load_runs(Path(args.src))
-    out = summary_by_method(df)
     dst = Path(args.dst)
     dst.parent.mkdir(parents=True, exist_ok=True)
-    out.to_csv(dst, index=False)
+    accepted_dst = dst.with_name(f"{dst.stem}_accepted_only{dst.suffix}")
+
+    unconditional = summary_by_method(df, accepted_only=False)
+    accepted_only = summary_by_method(df, accepted_only=True)
+
+    unconditional.to_csv(dst, index=False)
+    accepted_only.to_csv(accepted_dst, index=False)
     print(f"Wrote {dst}")
+    print(f"Wrote {accepted_dst}")
 
 
 if __name__ == '__main__':

@@ -1,0 +1,11 @@
+produced_runs=9
+expected_runs=9
+failed_runs=0
+accepted_runs=9
+strict_runs=9
+real_source_runs=9
+walltime_hits=3
+ede_postopt_rows=3
+EDE_median_j=0.830046015373
+ILS_MS_median_j=0.795110001794
+StdDE_median_j=1.084113793452

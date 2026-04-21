@@ -62,6 +62,7 @@ If public benchmark files are available, place them under:
 
 The loader now auto-detects Solomon-like text instances (`CUST NO.`, `XCOORD.`, `READY TIME`, `DUE DATE`, `SERVICE TIME`).
 If no file is found for a manifest row, the suite falls back to deterministic synthetic generation.
+Preflight checks now distinguish a locally missing file from a manifest row that names a non-public benchmark id such as `RC109` in the Solomon-100 family.
 
 
 - `configs/` full manifest, method registry, budgets, metrics schema, stats plan
@@ -92,6 +93,7 @@ python scripts/aggregate_results.py
 python scripts/run_stats.py
 python scripts/build_latex_tables.py
 python scripts/build_claim_macros.py
+python scripts/build_claim_evidence_map.py
 ```
 
 ### 3. Full experiment run
@@ -153,12 +155,17 @@ Before manuscript submission, these must be regenerated from real runs:
 
 - `generated/master_runs.csv`
 - `generated/summary_by_method.csv`
+- `generated/summary_by_method_accepted_only.csv`
 - `generated/master_stats.csv`
+- `generated/master_stats_accepted_only.csv`
 - `generated/table_feasibility_summary.tex`
+- `generated/table_feasibility_summary_accepted_only.tex`
 - `generated/table_friedman_omnibus.tex`
+- `generated/table_friedman_omnibus_accepted_only.tex`
 - `generated/table_posthoc_holm.tex`
+- `generated/table_posthoc_holm_accepted_only.tex`
 - `generated/claim_macros.tex`
-- completed `templates/claim_evidence_map_template.csv`
+- `generated/claim_evidence_map.csv`
 
 ## Non-negotiable rules
 

@@ -1,0 +1,9 @@
+produced_runs=18
+failed_runs=0
+accepted_runs=18
+strict_runs=18
+real_source_runs=18
+walltime_hits=18
+EDE_median_j=0.878141106285
+ILS_MS_median_j=0.882979997644
+StdDE_median_j=1.099288055750

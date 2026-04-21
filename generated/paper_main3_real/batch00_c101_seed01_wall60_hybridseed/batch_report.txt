@@ -1,0 +1,12 @@
+batch=batch00_c101_seed01_wall60_hybridseed
+manifest=configs/paper_main3_real_batches/experiment_manifest_paper_main3_real_batch00_c101_seed01_wall60.csv
+rows=9
+accepted_rows=9
+failed_rows=0
+walltime_hit_rows=9
+EDE_mean_runtime_sec=60.126
+EDE_max_runtime_sec=60.168
+ILS_MS_mean_runtime_sec=60.045
+ILS_MS_max_runtime_sec=60.095
+StdDE_mean_runtime_sec=60.037
+StdDE_max_runtime_sec=60.062

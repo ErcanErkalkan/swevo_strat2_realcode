@@ -1,0 +1,12 @@
+produced_runs=54
+failed_runs=0
+accepted_runs=54
+strict_runs=54
+real_source_runs=54
+walltime_hits=54
+EDE_median_j=0.884356813772
+ILS_MS_median_j=0.915299484612
+StdDE_median_j=1.065850471772
+EDE_vs_ILS_MS_wins=14
+EDE_vs_ILS_MS_losses=4
+EDE_vs_ILS_MS_ties=0

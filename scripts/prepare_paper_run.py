@@ -9,10 +9,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import argparse
 import csv
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import Iterable
 
-from swevo_suite.benchmark import build_problem
+from swevo_suite.benchmark import InvalidBenchmarkInstanceId, build_problem
 from swevo_suite.manifest import load_manifest
 from swevo_suite.paths import CONFIGS, GENERATED
 
@@ -121,7 +121,12 @@ def main() -> None:
             else:
                 resolvable_keys.add(key)
         except Exception as exc:  # pragma: no cover - operational path
-            status = "missing" if isinstance(exc, FileNotFoundError) else "error"
+            if isinstance(exc, InvalidBenchmarkInstanceId):
+                status = "invalid_public_instance_id"
+            elif isinstance(exc, FileNotFoundError):
+                status = "missing"
+            else:
+                status = "error"
             error = f"{type(exc).__name__}: {exc}"
             blocked_keys.add(key)
 
@@ -223,6 +228,7 @@ def main() -> None:
     )
 
     blocked_instances = sorted({plan.instance_id for _, plan in blocked_pairs})
+    blocked_status_counts = Counter(row["status"] for row in resolution_rows if row["status"] != "ok")
     report_lines = [
         f"source_manifest={_rel(manifest_path)}",
         f"requested_manifest={_rel(requested_path)}",
@@ -236,6 +242,12 @@ def main() -> None:
         f"ready_runs={len(ready_pairs)}",
         f"blocked_runs={len(blocked_pairs)}",
         f"blocked_instances={','.join(blocked_instances) if blocked_instances else 'none'}",
+        "blocked_statuses="
+        + (
+            ",".join(f"{status}:{count}" for status, count in sorted(blocked_status_counts.items()))
+            if blocked_status_counts
+            else "none"
+        ),
         f"batch_count={len(batch_rows)}",
     ]
     report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")

@@ -1,0 +1,11 @@
+compare_case=dev_broad_route_traj vs previous_dev_broad_same_blocks
+subset_runs=54
+EDE_previous=0.968084550892
+EDE_route_traj=0.884356813772
+EDE_delta=-0.083727737121
+ILS_MS_previous=0.970826731565
+ILS_MS_route_traj=0.915299484612
+ILS_MS_delta=-0.055527246954
+StdDE_previous=1.115699877068
+StdDE_route_traj=1.065850471772
+StdDE_delta=-0.049849405297
