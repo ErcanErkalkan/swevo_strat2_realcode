@@ -1209,6 +1209,7 @@ class MetaheuristicConfig:
     trajectory_time_fraction: float | None = None
     use_route_alns_endgame: bool = False
     route_endgame_reserve_s: float | None = None
+    route_endgame_burst_iters: int | None = None
 
 
 def default_population_size(customer_count: int) -> int:
@@ -1533,7 +1534,10 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
         and not _time_exceeded(deadline)
         and (endgame_reserve_s <= 0.0 or _remaining_time(deadline) > 0.5)
     ):
-        burst_iters = min(3 if problem.customer_count <= 120 else 2, cfg.eval_budget - evals)
+        burst_iters = min(
+            cfg.route_endgame_burst_iters if cfg.route_endgame_burst_iters is not None else 3 if problem.customer_count <= 120 else 2,
+            cfg.eval_budget - evals,
+        )
         b_best, _, generated = route_alns_endgame(
             problem,
             best,

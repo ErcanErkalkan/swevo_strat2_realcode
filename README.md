@@ -63,6 +63,7 @@ If public benchmark files are available, place them under:
 The loader now auto-detects Solomon-like text instances (`CUST NO.`, `XCOORD.`, `READY TIME`, `DUE DATE`, `SERVICE TIME`).
 If no file is found for a manifest row, the suite falls back to deterministic synthetic generation.
 Preflight checks now distinguish a locally missing file from a manifest row that names a non-public benchmark id such as `RC109` in the Solomon-100 family.
+If that happens, `scripts/propose_benchmark_repairs.py` writes proposal inventory/manifest files without mutating the canonical configs.
 
 
 - `configs/` full manifest, method registry, budgets, metrics schema, stats plan
@@ -89,6 +90,8 @@ python scripts/validate_master_runs.py generated/master_runs_micro.csv
 ### 2. Build summaries and manuscript tables
 
 ```bash
+python scripts/check_benchmark_inventory.py
+python scripts/propose_benchmark_repairs.py
 python scripts/aggregate_results.py
 python scripts/run_stats.py
 python scripts/build_latex_tables.py

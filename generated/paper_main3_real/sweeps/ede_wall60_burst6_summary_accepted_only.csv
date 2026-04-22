@@ -1,0 +1,2 @@
+phase,tier,method_id,summary_scope,source_runs,accepted_runs,strict_duty_runs,accepted_rate,strict_duty_rate,runs,median_j,median_cost,median_energy,median_co2,median_runtime,median_wh,median_imp_per_wh
+main,small,EDE,accepted_only,3,3,3,100.0,100.0,3,0.808455107646672,2358.7671350926253,1979.5106497111367,1003.6713362077672,60.0566131999949,0.8674844128888152,0.25241161826041

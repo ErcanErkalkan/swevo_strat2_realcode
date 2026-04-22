@@ -10,4 +10,5 @@ requested_runs=6480
 ready_runs=6300
 blocked_runs=180
 blocked_instances=RC109
+blocked_statuses=invalid_public_instance_id:1
 batch_count=30

@@ -1,0 +1,14 @@
+source_manifest=configs\experiment_manifest_full_repair_proposal.csv
+requested_manifest=configs\experiment_manifest_paper_main3_real_repair_proposal_requested.csv
+ready_manifest=configs\experiment_manifest_paper_main3_real_repair_proposal_ready.csv
+blocked_manifest=configs\experiment_manifest_paper_main3_real_repair_proposal_blocked.csv
+resolution_csv=generated\paper_main3_real_repair_proposal_preflight_resolution.csv
+batch_index_csv=generated\paper_main3_real_repair_proposal_batch_index.csv
+methods=EDE,ILS_MS,StdDE
+tiers=small,medium,large
+requested_runs=6480
+ready_runs=6480
+blocked_runs=0
+blocked_instances=none
+blocked_statuses=none
+batch_count=30

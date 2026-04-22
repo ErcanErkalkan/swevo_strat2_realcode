@@ -15,6 +15,13 @@ def _env_float(name: str) -> float | None:
     return float(raw)
 
 
+def _env_int(name: str) -> int | None:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return None
+    return int(raw)
+
+
 class EDEComparator(BaseComparator):
     def __init__(self):
         super().__init__(method_id="EDE")
@@ -23,6 +30,7 @@ class EDEComparator(BaseComparator):
         pop = default_population_size(plan.customer_count)
         reserve_override = _env_float("SWEVO_EDE_ROUTE_ENDGAME_RESERVE_S")
         trajectory_fraction = _env_float("SWEVO_EDE_TRAJECTORY_FRACTION")
+        burst_iters = _env_int("SWEVO_EDE_ROUTE_ENDGAME_BURST_ITERS")
         return MetaheuristicConfig(
             population_size=pop,
             eval_budget=plan.eval_budget,
@@ -43,6 +51,7 @@ class EDEComparator(BaseComparator):
             trajectory_time_fraction=trajectory_fraction,
             use_route_alns_endgame=True,
             route_endgame_reserve_s=reserve_override if reserve_override is not None else 3.0 if plan.customer_count <= 120 and plan.walltime_cap_s and plan.walltime_cap_s > 30 else None,
+            route_endgame_burst_iters=burst_iters,
         )
 
     def solve(self, plan: RunPlan):
