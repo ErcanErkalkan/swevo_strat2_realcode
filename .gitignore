@@ -8,3 +8,4 @@ generated/*.log
 generated/checkpoints/
 generated/archives/
 generated/figures/
+manuscript/
