@@ -1,0 +1,14 @@
+source_manifest=configs\experiment_manifest_full.csv
+requested_manifest=configs\experiment_manifest_submission_full_real_requested.csv
+ready_manifest=configs\experiment_manifest_submission_full_real_ready.csv
+blocked_manifest=configs\experiment_manifest_submission_full_real_blocked.csv
+resolution_csv=generated\submission_full_real_preflight_resolution.csv
+batch_index_csv=generated\submission_full_real_batch_index.csv
+methods=EDE,StdDE,ALNS_MS,HGS_MS,ILS_MS,A1_NoSeed,A2_NoJDE,A3_NoLNS
+tiers=small,medium,large
+requested_runs=17280
+ready_runs=17280
+blocked_runs=0
+blocked_instances=none
+blocked_statuses=none
+batch_count=30

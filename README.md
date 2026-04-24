@@ -49,6 +49,7 @@ The main manifest defines **17,280 planned runs**:
 A smaller developer manifest is also included:
 
 - `configs/experiment_manifest_micro.csv`
+- Split roles and promotion rules are documented in `docs/EXPERIMENT_SPLITS.md`.
 
 ## Package layout
 
@@ -90,6 +91,12 @@ python scripts/validate_master_runs.py generated/master_runs_micro.csv
 ### 2. Build summaries and manuscript tables
 
 ```bash
+python scripts/finalize_submission_state.py
+```
+
+Equivalent step-by-step commands:
+
+```bash
 python scripts/check_benchmark_inventory.py
 python scripts/propose_benchmark_repairs.py
 python scripts/aggregate_results.py
@@ -97,11 +104,16 @@ python scripts/run_stats.py
 python scripts/build_latex_tables.py
 python scripts/build_claim_macros.py
 python scripts/build_claim_evidence_map.py
+python scripts/write_pipeline_audit.py
+python scripts/check_submission_gates.py
 ```
 
 ### 3. Full experiment run
 
 ```bash
+python scripts/prepare_paper_run.py \
+  --methods EDE StdDE ALNS_MS HGS_MS ILS_MS A1_NoSeed A2_NoJDE A3_NoLNS \
+  --prefix submission_full_real
 PYTHONPATH=src python scripts/run_manifest.py run \
   --manifest configs/experiment_manifest_full.csv \
   --output generated/master_runs.csv

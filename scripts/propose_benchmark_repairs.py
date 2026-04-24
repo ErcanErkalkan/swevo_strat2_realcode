@@ -94,7 +94,27 @@ def _load_csv(path: Path) -> list[dict[str, str]]:
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = list(rows[0].keys()) if rows else []
+    if rows:
+        fieldnames = list(rows[0].keys())
+    elif path.name == "benchmark_repair_suggestions.csv":
+        fieldnames = [
+            "instance_id",
+            "benchmark_family",
+            "customer_count",
+            "structure_class",
+            "default_tier",
+            "current_status",
+            "blocked_manifest_rows",
+            "suggestion_1",
+            "suggestion_1_reason",
+            "suggestion_2",
+            "suggestion_2_reason",
+            "suggestion_3",
+            "suggestion_3_reason",
+            "error",
+        ]
+    else:
+        fieldnames = []
     with path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -199,14 +219,15 @@ def main() -> None:
 
     suggestions, replacement_map = build_repair_plan(inventory_rows, resolution_rows, manifest_rows)
 
+    _write_csv(suggestions_output, suggestions)
     if suggestions:
-        _write_csv(suggestions_output, suggestions)
         _write_csv(proposal_inventory_output, _apply_replacements(inventory_rows, replacement_map))
         _write_csv(proposal_manifest_output, _apply_replacements(manifest_rows, replacement_map))
         print(f"Wrote {suggestions_output}")
         print(f"Wrote {proposal_inventory_output}")
         print(f"Wrote {proposal_manifest_output}")
     else:
+        print(f"Wrote {suggestions_output}")
         print("No invalid benchmark ids found; no repair proposal written.")
 
 

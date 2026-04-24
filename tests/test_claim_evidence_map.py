@@ -157,3 +157,49 @@ def test_claim_evidence_map_marks_supported_claims(tmp_path: Path) -> None:
         "C03": "supported_by_artifacts",
         "C04": "supported_by_artifacts",
     }
+
+
+def test_claim_evidence_map_normalizes_claim_id_case_and_whitespace() -> None:
+    module = _load_script_module()
+
+    template = pd.DataFrame(
+        [
+            {
+                "claim_id": " c01 ",
+                "manuscript_section": "Results/Feasibility",
+                "exact_claim_text": "E-DE achieved X% accepted hard-feasible terminations",
+                "source_table_or_figure": "tab:feasibility_summary_generated",
+                "source_csv_or_tex": "generated/summary_by_method.csv",
+                "generation_script": "scripts/aggregate_results.py",
+                "reproduction_command": "python scripts/aggregate_results.py",
+                "status": "todo",
+                "notes": "",
+            }
+        ]
+    )
+    summary = pd.DataFrame(
+        [
+            {
+                "phase": "main",
+                "tier": "small",
+                "method_id": "EDE",
+                "summary_scope": "accepted_only",
+                "source_runs": 10,
+                "accepted_runs": 10,
+                "strict_duty_runs": 10,
+                "accepted_rate": 100.0,
+                "strict_duty_rate": 100.0,
+                "runs": 10,
+                "median_j": 1.0,
+                "median_cost": 1.0,
+                "median_energy": 1.0,
+                "median_co2": 1.0,
+                "median_runtime": 1.0,
+                "median_wh": 1.0,
+                "median_imp_per_wh": 1.0,
+            }
+        ]
+    )
+
+    completed = template.apply(module._fill_claim_row, axis=1, summary=summary, stats=None)
+    assert completed.iloc[0]["status"] == "supported_by_artifacts"

@@ -56,7 +56,7 @@ def _first_non_null(*values):
 
 
 def _fill_claim_row(row: pd.Series, summary: pd.DataFrame | None, stats: pd.DataFrame | None) -> pd.Series:
-    claim_id = row["claim_id"]
+    claim_id = str(row["claim_id"]).strip().upper()
     out = row.copy()
     out["status"] = "missing_artifacts"
     out["notes"] = "Required artifacts were not available."
