@@ -1,0 +1,4 @@
+metric,control_method,compare_method,n_pairs,wilcoxon_stat,p_value,median_diff_control_minus_compare,rank_biserial,p_holm,section,blocks,k_methods,friedman_chi2,kendalls_w
+j_scaled_final,EDE,ILS_MS,18.0,63.0,0.34654998779296875,0.0026598152637530847,0.0,0.34654998779296875,pairwise,,,,
+j_scaled_final,EDE,StdDE,18.0,0.0,7.62939453125e-06,-0.1273377418069006,1.0,1.52587890625e-05,pairwise,,,,
+j_scaled_final,,,,,1.3709590863840842e-06,,,,omnibus,18.0,3.0,27.0,0.75
