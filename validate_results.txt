@@ -1,0 +1,22 @@
+﻿python : Traceback (most recent call last):
+At line:1 char:24
++ ... PYTHONPATH="src"; python scripts/validate_master_runs.py 2>&1 | Out-F ...
++                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last) 
+   ::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\Ercan\Drive'ım\swevo_q1_revision\scripts\validate_master_runs.
+py", line 57, in <module>
+    raise SystemExit(main(path))
+                     ~~~~^^^^^^
+  File "C:\Users\Ercan\Drive'ım\swevo_q1_revision\scripts\validate_master_runs.
+py", line 19, in main
+    with path.open() as f:
+         ~~~~~~~~~^^
+  File "C:\Users\Ercan\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__in
+it__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'generated\\master_runs
+.csv'

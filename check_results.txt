@@ -1,0 +1,80 @@
+﻿============================================================
+BENCHMARK VALIDATION REPORT
+============================================================
+
+✓ Manifest file loaded: configs/experiment_manifest_paper_main3_real_ready.csv
+  Total unique instances: 36
+  Instances: ['C101', 'C104', 'C109', 'C1_2_1', 'C1_2_5', 'C1_4_1', 'C1_4_5', 'C201', 'C2_2_1', 'C2_2_5', 'C2_4_1', 'C2_4_5', 'R101', 'R104', 'R109', 'R1_2_1', 'R1_2_5', 'R1_4_1', 'R1_4_5', 'R201', 'R2_2_1', 'R2_2_5', 'R2_4_1', 'R2_4_5', 'RC101', 'RC104', 'RC108', 'RC1_2_1', 'RC1_2_5', 'RC1_4_1', 'RC1_4_5', 'RC201', 'RC2_2_1', 'RC2_2_5', 'RC2_4_1', 'RC2_4_5']
+
+Scanning benchmark files...
+✓ Total benchmark files found: 710
+  Unique instances: 710
+
+❌ MISSING instances (in manifest but not in benchmarks):
+   - C101
+   - C104
+   - C109
+   - C1_2_1
+   - C1_2_5
+   - C1_4_1
+   - C1_4_5
+   - C201
+   - C2_2_1
+   - C2_2_5
+   - C2_4_1
+   - C2_4_5
+   - R101
+   - R104
+   - R109
+   - R1_2_1
+   - R1_2_5
+   - R1_4_1
+   - R1_4_5
+   - R201
+   - R2_2_1
+   - R2_2_5
+   - R2_4_1
+   - R2_4_5
+   - RC101
+   - RC104
+   - RC108
+   - RC1_2_1
+   - RC1_2_5
+   - RC1_4_1
+   - RC1_4_5
+   - RC201
+   - RC2_2_1
+   - RC2_2_5
+   - RC2_4_1
+   - RC2_4_5
+
+⚠ Extra benchmark instances (in benchmarks but not in manifest):
+   - C1_10_2.TXT
+   - C1_10_4.TXT
+   - C1_8_1.TXT
+   - C2_10_1.TXT
+   - C2_2_1.TXT
+   - C2_6_7.TXT
+   - C2_8_1.TXT
+   - LC1_4_3
+   - LC2_10_3
+   - LC2_8_8
+   - LR1_6_5
+   - LR2_2_7
+   - LR2_8_8
+   - LRC1_8_10
+   - LRC2_4_7
+   - R2_2_3.TXT
+   - RC2_8_3.TXT
+   - lc208
+   - lr201
+   - r110
+   ... and 690 more
+
+📋 Checking for potentially stale instances (RC109, etc)...
+   Found potentially old instances: ['C109', 'R109']
+   ⚠ Note: These may be valid extended instances (C1_xx, R1_xx)
+
+============================================================
+END OF REPORT
+============================================================
