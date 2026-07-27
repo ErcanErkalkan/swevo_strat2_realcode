@@ -1,0 +1,19 @@
+run_dir=C:\Users\Ercan\Drive'ım\swevo_q1_revision\generated_real\pending_logs\resume_20260702_101051
+methods=EDE,StdDE,ALNS_MS,HGS_MS,ILS_MS,A1_NoSeed,A2_NoJDE,A3_NoLNS
+round=1 total_pending=4136
+  EDE: pending=517 current_rows=1643
+  StdDE: pending=517 current_rows=1643
+  ALNS_MS: pending=517 current_rows=1643
+  HGS_MS: pending=517 current_rows=1643
+  ILS_MS: pending=517 current_rows=1643
+  A1_NoSeed: pending=517 current_rows=1643
+  A2_NoJDE: pending=517 current_rows=1643
+  A3_NoLNS: pending=517 current_rows=1643
+started EDE pid=26556 pending=517
+started StdDE pid=24160 pending=517
+started ALNS_MS pid=21148 pending=517
+started HGS_MS pid=22548 pending=517
+started ILS_MS pid=24356 pending=517
+started A1_NoSeed pid=24288 pending=517
+started A2_NoJDE pid=26444 pending=517
+started A3_NoLNS pid=23644 pending=517
