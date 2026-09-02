@@ -1,191 +1,176 @@
 # SWEVO Strategy-2 Real-Code Experiment Package
 
-This package contains a **real, runnable reference implementation** for the manuscript's claimed
-MS-VRPTW comparator set:
+This package contains a real, runnable reference implementation for the sustainability-aware shift-indexed VRPTW study. The mathematical formulation permits shift-specific availability intervals, while the submission-primary public-benchmark experiment uses a benchmark-preserving special case in which the three shift/regime labels all span the native horizon `[0,H]`.
+
+## Submission-primary scope
+
+The final submission-primary evidence set uses **five methods**:
 
 - EDE
 - StdDE
 - ALNS_MS
 - HGS_MS
 - ILS_MS
-- A1_NoSeed
-- A2_NoJDE
-- A3_NoLNS
 
-The code is written to match the manuscript logic as closely as possible from the available text:
+The authoritative primary ledger contains **10,800 completed real-benchmark runs**:
 
-- feasibility-first decoding,
-- bounded overtime at return-to-depot,
-- deterministic feasible seeding,
-- random-key DE / jDE,
-- boundary-focused LNS,
-- ALNS destroy-repair search,
-- HGS-style giant-tour population search with split decoding,
-- ILS with boundary perturbations,
-- matched-budget run ledger,
-- validator / aggregation / statistics / LaTeX table generation.
+36 instances × 3 scenarios × 5 methods × 20 paired seeds.
 
-## Important scope note
+The completed historical 17,280-run ledger additionally contains A1_NoSeed, A2_NoJDE, and A3_NoLNS. Those 6,480 historical ablation rows were generated before the single-factor definitions were locked on 2026-09-02. They are retained for provenance, but they are **not used for submission-primary inferential statistics or component-effect claims**.
 
-This is a **reference implementation**, not a claim that the paper's final numerical results have already
-been reproduced. The original uploaded ZIP did not contain a complete live optimizer codebase or benchmark
-instance files, so this package provides:
+A new 6,480-run ablation campaign is therefore **not required for the claims made in the current manuscript**. The paper evaluates the integrated EDE system and explicitly does not claim how much each individual EDE component contributes.
 
-1. real optimizer code,
-2. deterministic benchmark/scenario generation from the manifest,
-3. the full experiment pipeline,
-4. reproducible run logging,
-5. manuscript-facing table/macro generation.
+## Primary temporal/regime semantics
 
-That means the package now removes the earlier “contract stub” problem. It does **not** magically certify
-that the manuscript's reported percentages are already correct; those must still come from actual runs.
+The 10,800-run public-benchmark experiment **does not partition the Solomon/Homberger planning horizon into three consecutive driver shifts**. The loader preserves the native benchmark feasibility region by creating three shift/regime labels whose availability intervals are all `[0,H]`, where `H` is the original benchmark horizon. The labels therefore represent overlapping operating regimes rather than empirically validated sequential handoffs.
 
-## Main study scale
+All three vehicle types are available under every regime label. Scenarios change vehicle-specific emission multipliers together with regime and zone multipliers; they do **not** change fleet-share proportions. Vehicle type is selected at route level and no persistent physical vehicle identity is tracked across regime labels. Consequently, the current evidence supports the integrated method on a shift-indexed/full-horizon-regime special case, not cross-shift vehicle reuse or sequential driver-shift claims.
 
-The main manifest defines **17,280 planned runs**:
+## Implemented algorithmic elements
 
-36 instances × 3 scenarios × 8 methods × 20 paired seeds.
+- feasibility-first decoding
+- bounded overtime at return-to-depot
+- deterministic feasible seeding
+- random-key DE / jDE
+- boundary-focused LNS and route intensification
+- ALNS destroy-repair search
+- HGS-style giant-tour population search with split decoding
+- ILS with boundary perturbations
+- paired-seed, tier-matched wall-clock production protocol
+- validator / aggregation / statistics / LaTeX table generation
 
-A smaller developer manifest is also included:
+## Primary evidence files
 
-- `configs/experiment_manifest_micro.csv`
-- Split roles and promotion rules are documented in `docs/EXPERIMENT_SPLITS.md`.
+The submission package uses:
 
-## Package layout
+- `configs/experiment_manifest_submission_primary.csv`
+- `generated_submission/master_runs.csv`
+- `generated_submission/summary_by_method.csv`
+- `generated_submission/summary_by_method_accepted_only.csv`
+- `generated_submission/master_stats.csv`
+- `generated_submission/master_stats_accepted_only.csv`
+- `generated_submission/table_feasibility_summary.tex`
+- `generated_submission/table_friedman_omnibus.tex`
+- `generated_submission/table_posthoc_holm.tex`
+- `generated_submission/claim_macros.tex`
+- `generated_submission/claim_evidence_map.csv`
+- `generated_submission/robustness_by_scenario.csv`
+- `generated_submission/robustness_by_structure.csv`
+- `generated_submission/tier_native_endpoint_reductions.csv`
+- `generated_submission/secondary_endpoint_stats.csv`
+- `generated_submission/SUBMISSION_EVIDENCE_SCOPE.md`
+
+The full historical ledger remains available separately and must not be substituted for the submission-primary ledger when regenerating manuscript statistics.
+
+For a frozen submission/release branch, historical generated directories such as `generated/`, `generated_real/`, `generated_pilot/`, and `generated_smoke/` should not be left beside `generated_submission/` in a way that could be mistaken for primary evidence. Preserve them in a historical archive/tag or external evidence archive, while keeping `generated_submission/` as the only manuscript-facing generated namespace.
 
 ## Real benchmark files
 
-If public benchmark files are available, place them under:
+Public benchmark files are stored under:
 
 - `data/benchmarks/solomon/`
 - `data/benchmarks/homberger/`
 - `data/benchmarks/li_lim/`
 
-The loader now auto-detects Solomon-like text instances (`CUST NO.`, `XCOORD.`, `READY TIME`, `DUE DATE`, `SERVICE TIME`).
-If no file is found for a manifest row, the suite falls back to deterministic synthetic generation.
-Preflight checks now distinguish a locally missing file from a manifest row that names a non-public benchmark id such as `RC109` in the Solomon-100 family.
-If that happens, `scripts/propose_benchmark_repairs.py` writes proposal inventory/manifest files without mutating the canonical configs.
+The loader auto-detects Solomon-like text instances. If a configured benchmark file is not available locally, the inventory/preflight tools identify the condition rather than silently changing the submission-primary evidence set.
 
-
-- `configs/` full manifest, method registry, budgets, metrics schema, stats plan
-- `src/swevo_suite/benchmark.py` deterministic benchmark/scenario builder
-- `src/swevo_suite/solver.py` objective evaluation, decoder, repair, local search, archive, search kernels
-- `src/swevo_suite/comparators/` live comparator adapters
-- `scripts/` matrix generation, run execution, validation, aggregation, stats, LaTeX output
-- `generated/` run outputs and manuscript-facing artifacts
-
-## Real-run quick start
-
-### 1. Micro validation run
-
-```bash
-cd swevo_strat2_realcode
-PYTHONPATH=src python scripts/run_manifest.py run \
-  --manifest configs/experiment_manifest_micro.csv \
-  --output generated/master_runs_micro.csv \
-  --budget-override 12 \
-  --overwrite --progress
-python scripts/validate_master_runs.py generated/master_runs_micro.csv
-```
-
-### 2. Build summaries and manuscript tables
-
-```bash
-python scripts/finalize_submission_state.py
-```
-
-Equivalent step-by-step commands:
-
-```bash
-python scripts/check_benchmark_inventory.py
-python scripts/propose_benchmark_repairs.py
-python scripts/aggregate_results.py
-python scripts/run_stats.py
-python scripts/build_latex_tables.py
-python scripts/build_claim_macros.py
-python scripts/build_claim_evidence_map.py
-python scripts/write_pipeline_audit.py
-python scripts/check_submission_gates.py
-```
-
-### 3. Full experiment run
-
-```bash
-python scripts/prepare_paper_run.py \
-  --methods EDE StdDE ALNS_MS HGS_MS ILS_MS A1_NoSeed A2_NoJDE A3_NoLNS \
-  --prefix submission_full_real
-PYTHONPATH=src python scripts/run_manifest.py run \
-  --manifest configs/experiment_manifest_full.csv \
-  --output generated/master_runs.csv
-```
+The authoritative 10,800-run submission ledger itself uses **12 Solomon 100-customer instances and 24 Homberger--Gehring instances (12 at 200 customers and 12 at 400 customers)**. Li & Lim support remains in the codebase but is not part of the current submission-primary evidence and must not be described as such in the manuscript.
 
 ## Algorithm mapping
 
 ### EDE
 
-- random-key encoding (2-column keys)
+- random-key encoding
 - deterministic feasible seeding
-- jDE self-adaptation on `F` and `CR`
+- jDE self-adaptation of `F` and `CR`
+- EDE donor/current-to-best strategy
 - feasibility-first selection
 - bounded repair
+- trajectory/deep intensification
 - boundary-focused LNS
-- mini-restart on diversity collapse
+- route-ALNS endgame
+- diversity restart
 
 ### StdDE
 
-- same random-key / decode / repair layer
-- no deterministic seed
-- no jDE
-- no LNS
+- common objective/feasibility interface
+- random initialization
+- fixed `F/CR`
+- rand/1-style DE donor
+- no EDE-specific LNS/intensification stack
 
 ### ALNS_MS
 
 - destroy/repair schedule search
-- operators: random, worst, related, shift-border removal
+- random, worst, related, and duty-horizon-boundary removal
 - feasibility-first reinsertion and local search
 
 ### HGS_MS
 
 - giant-tour population
 - order crossover
-- split decoding through the same MS-VRPTW decoder
-- survivor selection with simple diversity pressure
+- split decoding through the common shift-indexed VRPTW evaluation interface
+- survivor selection with diversity pressure
 
 ### ILS_MS
 
 - single-solution search
-- local search to local optimum
-- shift-border perturbations / swap perturbations
+- feasibility-first local improvement
+- duty-horizon-boundary/swap perturbations
 - probabilistic acceptance
 
-### Ablations
+### Code-level component variants
 
-- `A1_NoSeed`: EDE without deterministic seeding
-- `A2_NoJDE`: EDE with fixed `F/CR`
-- `A3_NoLNS`: EDE without boundary-focused LNS
+The code also exposes controlled single-concept variants derived from the current EDE configuration:
 
-## Submission-critical outputs
+- `A1_NoSeed`: remove informed deterministic seeding only
+- `A2_NoJDE`: fix `F/CR` while retaining the EDE donor strategy and all other non-jDE components
+- `A3_NoLNS`: remove the LNS family while retaining non-LNS EDE components
 
-Before manuscript submission, these must be regenerated from real runs:
+These definitions are kept for reproducibility and future component studies. They are not part of the current submission-primary statistical comparison.
 
-- `generated/master_runs.csv`
-- `generated/summary_by_method.csv`
-- `generated/summary_by_method_accepted_only.csv`
-- `generated/master_stats.csv`
-- `generated/master_stats_accepted_only.csv`
-- `generated/table_feasibility_summary.tex`
-- `generated/table_feasibility_summary_accepted_only.tex`
-- `generated/table_friedman_omnibus.tex`
-- `generated/table_friedman_omnibus_accepted_only.tex`
-- `generated/table_posthoc_holm.tex`
-- `generated/table_posthoc_holm_accepted_only.tex`
-- `generated/claim_macros.tex`
-- `generated/claim_evidence_map.csv`
+## Measurement and statistical semantics
 
-## Non-negotiable rules
+- The production comparison is **wall-clock matched by tier**. `eval_budget` is a nominal outer search-step guard and is not presented as a complete count of every nested objective evaluation.
+- `compute_wh` is a **model-based compute-energy proxy** calculated as runtime × assumed tier power / 3600. It is not hardware-metered electrical energy.
+- The assumed tier powers are 52 W (small), 86 W (medium), and 128 W (large).
+- Pairwise Wilcoxon inference first collapses the 20 paired seeds to the median within each `instance_id × scenario_id` block.
+- Friedman and Wilcoxon-Holm therefore use the same **108 independent blocks**.
+- Search diagnostics and final performance are reported separately.
+- The primary run ledger did not preserve a complete CPU model/RAM/OS identity. Runtime results are therefore interpreted only within the recorded tier-matched protocol; cross-platform runtime or physical-energy generalization is not claimed.
+
+## Rebuild the submission-primary artifacts
+
+Use the analysis-only finalizer; it does **not** launch a new optimizer campaign:
+
+```bash
+python scripts/finalize_submission_state.py
+```
+
+Equivalent explicit commands:
+
+```bash
+export SWEVO_GENERATED_DIR=generated_submission
+
+python scripts/validate_master_runs.py generated_submission/master_runs.csv
+python scripts/aggregate_results.py generated_submission/master_runs.csv generated_submission/summary_by_method.csv
+python scripts/run_stats.py generated_submission/master_runs.csv generated_submission/master_stats.csv
+python scripts/build_latex_tables.py generated_submission/summary_by_method.csv generated_submission/master_stats.csv --output-dir generated_submission
+python scripts/build_robustness_evidence.py generated_submission/master_runs.csv --output-dir generated_submission
+python scripts/build_claim_macros.py generated_submission/summary_by_method.csv --output generated_submission/claim_macros.tex
+python scripts/build_claim_evidence_map.py --summary generated_submission/summary_by_method.csv --stats generated_submission/master_stats.csv --output generated_submission/claim_evidence_map.csv
+python scripts/check_submission_gates.py --manifest configs/experiment_manifest_submission_primary.csv
+python scripts/write_pipeline_audit.py --manifest configs/experiment_manifest_submission_primary.csv
+```
+
+## Non-negotiable submission rules
 
 - Accepted final rows must have zero final violations.
-- Final performance tables must not mix accepted outputs with violation counts.
-- Search diagnostics and final performance remain separate layers.
-- If ALNS/HGS/ILS appear in the paper, they must remain in the manifest and stats outputs.
-- Manuscript percentages must come from generated artifacts, not hand-typed values.
+- Strict-duty rows must have zero overtime.
+- Manuscript percentages and significance values must come from the submission-primary artifacts.
+- A1/A2/A3 historical rows must not be used to claim isolated component effects.
+- ALNS_MS, HGS_MS, and ILS_MS must remain in the primary comparator set.
+- `compute_wh` must always be labelled as a model-based proxy, not measured energy.
+- The 100% final-feasibility result is shared by all five primary methods and must not be used to claim a unique feasibility advantage for an EDE component.
+- The package does not claim equal hyperparameter-search budgets or universal superiority over optimally tuned external ALNS/HGS/ILS implementations.
+- The 10,800-run public-benchmark evidence must always be described as the overlapping full-horizon `[0,H]` regime special case; it must not be presented as a sequential non-overlapping three-shift experiment.
