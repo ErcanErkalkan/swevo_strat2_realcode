@@ -4,8 +4,8 @@ The complete submission-primary evidence is intentionally distributed with the m
 
 Authoritative archive at submission time:
 
-- `SWEVO_P7_RELEASE_CANDIDATE_2026-09-02.zip`
-- SHA-256: `7cb14f02da267f9dc3b322222551891759c5751d64f6eafb314d3759892a9d6d`
+- `SWEVO_P8_REPRODUCIBILITY_SUPPLEMENT_2026-09-02.zip`
+- SHA-256: `91914777f7d119a3abfbd345603a5398116f2884d87d7b32d054b36307fbc5d4`
 
 The archive contains the primary manifest, the 10,800-row `generated_submission/master_runs.csv` ledger, derived summaries/statistics, robustness evidence, claim-evidence map, manuscript snapshot, and analysis-only validation pipeline.
 
