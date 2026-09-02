@@ -6,7 +6,7 @@ from .paths import CONFIGS, GENERATED
 from .schemas import RunPlan
 
 def load_manifest(path: Optional[Path] = None) -> List[RunPlan]:
-    manifest_path = path or (CONFIGS / "experiment_manifest_full.csv")
+    manifest_path = path or (CONFIGS / "experiment_manifest_submission_primary.csv")
     rows: List[RunPlan] = []
     with manifest_path.open() as f:
         reader = csv.DictReader(f)
