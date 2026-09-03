@@ -25,7 +25,7 @@ A new 6,480-run ablation campaign is therefore **not required for the claims mad
 The exact owner-confirmed submission-primary reproducibility snapshot is distributed with the manuscript as Supplementary Material:
 
 - `SWEVO_FINAL_REPRODUCIBILITY_SUPPLEMENT_2026-09-03.zip`
-- SHA-256: `91d495ce7a64bda5b8fd98de0151818a86763e4b5caafaa27f38514d73129ae9`
+- SHA-256: `3aad983271e0e1cb6e7b4c62e38949906861ccf156b6e74722b6d500b6576a95`
 
 The public submission-scope branch is `submission-2026-09-02`. The release-style frozen branch ref is `release/v0.2.0-submission-rc1`; it is a branch ref, not a Git tag.
 
@@ -41,6 +41,12 @@ Author declarations confirmed on 2026-09-03:
 The 10,800-run public-benchmark experiment **does not partition the Solomon/Homberger planning horizon into three consecutive driver shifts**. The loader preserves the native benchmark feasibility region by creating three shift/regime labels whose availability intervals are all `[0,H]`, where `H` is the original benchmark horizon. The labels therefore represent overlapping operating regimes rather than empirically validated sequential handoffs.
 
 All three vehicle types are available under every regime label. Scenarios change vehicle-specific emission multipliers together with regime and zone multipliers; they do **not** change fleet-share proportions. Vehicle type is selected at route level and no persistent physical vehicle identity is tracked across regime labels. Consequently, the current evidence supports the integrated method on a shift-indexed/full-horizon-regime special case, not cross-shift vehicle reuse or sequential driver-shift claims.
+
+## Production hardware environment
+
+The production campaign was executed on a **Dell Vostro 3888** desktop with an **Intel Core i5-10400** CPU (6 physical cores / 12 threads, 2.90 GHz base frequency), **16 GB RAM** (2×8 GB at 2400 MHz), integrated Intel UHD Graphics 630, and **Windows 11 Enterprise 64-bit build 26200**. Storage comprised a 256 GB SK hynix NVMe SSD and a 480 GB Toshiba TR200 SATA SSD. BIOS: Dell 2.35.1; motherboard: Dell 0RM5DR. The optimizer is CPU-based and did not use the integrated GPU for search computation.
+
+The seed-level ledger does not embed a per-run hardware fingerprint. Runtime comparisons are therefore interpreted within this documented workstation and tier-matched protocol rather than as cross-platform guarantees. `compute_wh` remains a runtime × assumed-tier-power model proxy and is **not** hardware-metered electrical energy.
 
 ## Implemented algorithmic elements
 
@@ -153,7 +159,7 @@ These definitions are kept for reproducibility and future component studies. The
 - Pairwise Wilcoxon inference first collapses the 20 paired seeds to the median within each `instance_id × scenario_id` block.
 - Friedman and Wilcoxon-Holm therefore use the same **108 independent blocks**.
 - Search diagnostics and final performance are reported separately.
-- The primary run ledger did not preserve a complete CPU model/RAM/OS identity. Runtime results are therefore interpreted only within the recorded tier-matched protocol; cross-platform runtime or physical-energy generalization is not claimed.
+- Production hardware is documented above; the ledger does not embed a per-run machine fingerprint, so runtime inference remains scoped to the documented workstation/protocol.
 
 ## Rebuild the submission-primary artifacts
 
