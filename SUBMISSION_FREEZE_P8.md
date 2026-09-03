@@ -32,3 +32,7 @@ On 2026-09-03 the author explicitly confirmed: no specific grant funding; no com
 ## GitHub connector limitation
 
 The connected GitHub write interface supports branches and file commits but does not expose creation of Git tag/release objects. Therefore the immutable archival identity for the submitted reproducibility package is the SHA-256 checksum above. `release/v0.2.0-submission-rc1` is a release-style branch ref and must not be described as a Git tag.
+
+## Final frozen branch commit
+
+The final frozen submission branch is intended to point to the commit that contains this record together with the owner-confirmed README, data/code statement, evidence pointer, and author-declaration record. The release-style branch ref is moved to the same commit after the final update sequence.
