@@ -75,6 +75,34 @@ def test_pairwise_wilcoxon_can_filter_to_accepted_only() -> None:
     std_accepted = accepted[accepted["compare_method"] == "StdDE"].iloc[0]
 
     assert std_overall["summary_scope"] == "unconditional"
-    assert std_overall["n_pairs"] == 2
+    assert std_overall["n_pairs"] == 1
     assert std_accepted["summary_scope"] == "accepted_only"
     assert std_accepted["n_pairs"] == 1
+    # Inference is block-level after collapsing paired seeds within each
+    # instance x scenario block. Accepted-only filtering changes the block
+    # median, not the number of independent blocks in this fixture.
+    assert std_overall["median_diff_control_minus_compare"] == -0.85
+    assert std_accepted["median_diff_control_minus_compare"] == -0.6
+
+def test_run_stats_bundle_writes_only_canonical_master_stats(tmp_path: Path) -> None:
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    script_path = ROOT / "scripts" / "run_stats.py"
+    spec = spec_from_file_location("run_stats_script", script_path)
+    assert spec is not None and spec.loader is not None
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    out = tmp_path / "master_stats.csv"
+    module.write_stats_bundle(
+        sample_runs(),
+        metric="j_scaled_final",
+        control_method="EDE",
+        master_path=out,
+        accepted_only=False,
+    )
+
+    assert out.exists()
+    assert not (tmp_path / "pairwise_wilcoxon_effects.csv").exists()
+    assert not (tmp_path / "friedman_summary.csv").exists()
+

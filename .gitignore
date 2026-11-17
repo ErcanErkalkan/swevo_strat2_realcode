@@ -9,3 +9,15 @@ generated/checkpoints/
 generated/archives/
 generated/figures/
 manuscript/
+
+# C15 supplement-only inputs and local campaign outputs
+/ablation_execution_c15/
+/ablation_status/
+/confirmatory_protocol/
+/optional_historical/
+/generated_submission/master_runs.csv
+/generated_submission/c15_core_provenance.json
+/configs/experiment_manifest_submission_primary.csv
+/configs/anytime_profile_locked.csv
+/configs/operational_shift_stress_locked.csv
+/configs/parameter_sensitivity_locked.csv

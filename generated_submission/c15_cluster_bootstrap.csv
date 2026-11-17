@@ -1,0 +1,5 @@
+compare_method,clusters,cells,median_cell_difference,ci_low,ci_high,bootstrap_reps,seed,unit
+StdDE,36,108,-0.24838799275957846,-0.27576592290151836,-0.2222543698134538,20000,20261116,instance; three scenarios travel together
+ALNS_MS,36,108,-0.14312574580128457,-0.16671871616315326,-0.130397492096277,20000,20261116,instance; three scenarios travel together
+HGS_MS,36,108,-0.126836776244031,-0.14318499422931086,-0.10055784653036409,20000,20261116,instance; three scenarios travel together
+ILS_MS,36,108,-0.1370404336694998,-0.1572892088139053,-0.11434988019840531,20000,20261116,instance; three scenarios travel together

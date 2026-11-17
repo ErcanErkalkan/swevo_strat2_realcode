@@ -1,0 +1,6 @@
+run_id,instance_id,scenario_id,method_id,seed,tier,runtime_sec,walltime_cap_s
+R1_4_5__S1_balanced__EDE__seed20,R1_4_5,S1_balanced,EDE,20,large,10663.307668199996,7200.0
+R1_4_5__S1_balanced__StdDE__seed20,R1_4_5,S1_balanced,StdDE,20,large,10655.5799634,7200.0
+R1_4_5__S1_balanced__ALNS_MS__seed20,R1_4_5,S1_balanced,ALNS_MS,20,large,10617.87358689998,7200.0
+R1_4_5__S1_balanced__HGS_MS__seed20,R1_4_5,S1_balanced,HGS_MS,20,large,10656.459811999986,7200.0
+R1_4_5__S1_balanced__ILS_MS__seed20,R1_4_5,S1_balanced,ILS_MS,20,large,10658.958984099998,7200.0

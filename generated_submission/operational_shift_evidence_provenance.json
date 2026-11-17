@@ -1,0 +1,45 @@
+{
+  "checks": {
+    "bounded_overtime_runs": 3,
+    "hard_feasible_runs": 18,
+    "max_overtime_sum": 0.3410275506463449,
+    "paired_seeds": 2,
+    "runs": 18,
+    "solomon_audit_infeasible_counts": {
+      "C101": 16,
+      "R101": 58,
+      "RC101": 62
+    },
+    "strict_duty_runs": 15,
+    "structures": 3,
+    "tiers": 3,
+    "window_shrinkage_runs": 0
+  },
+  "claim_boundary": "implementation-level feasibility only; not real-world deployment validation or optimizer-superiority evidence",
+  "inputs": [
+    {
+      "bytes": 3836,
+      "path": "configs/operational_shift_stress_locked.csv",
+      "sha256": "aba44122f5e02d48ad44ee4ca4493ac90f781d4fcc921adad83d4f2ac04593d4"
+    },
+    {
+      "bytes": 601,
+      "path": "configs/solomon_equal_3shift_feasibility_audit.csv",
+      "sha256": "af82b5ee88f5c3f6f055c6f1022c7cdb079c1842299b0c6320d446792155c615"
+    }
+  ],
+  "outputs": [
+    {
+      "bytes": 274,
+      "path": "generated_submission/operational_shift_stress_summary.csv",
+      "sha256": "847ac34ca56f4f285f9cacdd84198c8f968ed998c0cdf713cf43adba1bedaf88"
+    },
+    {
+      "bytes": 774,
+      "path": "generated_submission/table_operational_shift_stress.tex",
+      "sha256": "a62ed6dd98d283b595394b949767dc1c1c933afce9283b0ebd3ee241c25b7479"
+    }
+  ],
+  "schema": "ede-operational-shift-evidence-v1",
+  "scope": "secondary_operational_semantics"
+}

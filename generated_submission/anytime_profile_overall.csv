@@ -1,0 +1,2 @@
+runs,hard_feasible_runs,strict_duty_runs,instance_cap_cells,ede_median_better_cells,paired_seed_cap_comparisons,ede_seed_wins,ties,stdde_seed_wins,auc_trajectories,ede_better_auc_trajectories,median_auc_pct_reduction_ede_vs_stdde,max_runtime_over_cap_s,scope
+48,48,48,12,12,24,23,0,1,6,6,9.26668228743737,0.049723213000106625,secondary_small_tier_s3_short_budget_descriptive_not_general_convergence

@@ -1,0 +1,6 @@
+run_id,runtime_sec,walltime_cap_s
+R1_4_5__S1_balanced__EDE__seed20,10663.307668199996,7200
+R1_4_5__S1_balanced__StdDE__seed20,10655.5799634,7200
+R1_4_5__S1_balanced__ALNS_MS__seed20,10617.87358689998,7200
+R1_4_5__S1_balanced__HGS_MS__seed20,10656.459811999986,7200
+R1_4_5__S1_balanced__ILS_MS__seed20,10658.958984099998,7200

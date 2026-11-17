@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "swevo-strat2-fullstack"
+name = "ede-sustainable-vrptw"
 version = "0.1.0"
-description = "Evidence-locked SWEVO experiment pipeline for MS-VRPTW comparator study"
+description = "Reproducible evidence-locked E-DE experiment and submission pipeline for sustainability-aware shift-indexed VRPTW"
 requires-python = ">=3.10"
 dependencies = [
   "pyyaml>=6.0",
@@ -13,10 +13,18 @@ dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
   "statsmodels>=0.14",
+  "Jinja2>=3.1",
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+release = ["pypdf>=4.0"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

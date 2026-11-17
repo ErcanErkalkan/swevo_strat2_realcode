@@ -1,0 +1,17 @@
+{
+  "small": {
+    "best_method": "HGS_MS",
+    "best_reduction_pct": 4.298810377234918,
+    "stdde_reduction_pct": 18.002758295632425
+  },
+  "medium": {
+    "best_method": "ILS_MS",
+    "best_reduction_pct": 14.639504459479024,
+    "stdde_reduction_pct": 24.997554185522965
+  },
+  "large": {
+    "best_method": "ILS_MS",
+    "best_reduction_pct": 15.47559915225537,
+    "stdde_reduction_pct": 27.087671847379944
+  }
+}

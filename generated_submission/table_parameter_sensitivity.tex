@@ -1,0 +1,19 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{lrrrrr}
+\toprule
+Configuration & Feasible & Median $J$ & Median $\Delta$ vs base (\%) & Max $|\Delta|$ (\%) & W/T/L \\
+\midrule
+BASE & 9/9 & 0.891 & 0.000 & 0.000 & 0/9/0 \\
+LNS5 & 9/9 & 0.891 & 0.000 & 1.971 & 3/5/1 \\
+LNS20 & 9/9 & 0.891 & 0.000 & 1.559 & 1/5/3 \\
+REPAIR8 & 9/9 & 0.892 & 0.000 & 1.559 & 0/6/3 \\
+REPAIR20 & 9/9 & 0.892 & 0.143 & 2.293 & 0/4/5 \\
+\bottomrule
+\end{tabular}
+\caption{Secondary short-budget local parameter-robustness screen on C101, R101, and RC101 under S3 (three paired seeds; 3-s wall-clock cap). Lower $J$ is better. W/T/L denotes wins/ties/losses versus the default E-DE configuration. This screen is descriptive and does not replace full-budget sensitivity or tuning studies.}
+\label{tab:parameter_sensitivity_secondary}
+\end{table}

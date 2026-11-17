@@ -1,0 +1,6 @@
+section,compare_config,statistic,p_raw,p_holm,n_blocks
+omnibus,ALL,10.902654867256667,0.027680100420472288,,9
+pairwise_vs_BASE,LNS5,14.0,0.375,0.75,9
+pairwise_vs_BASE,LNS20,13.5,0.25,0.75,9
+pairwise_vs_BASE,REPAIR8,10.5,0.25,0.75,9
+pairwise_vs_BASE,REPAIR20,5.0,0.0625,0.25,9

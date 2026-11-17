@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{lrrrrr}
+\toprule
+Instance & Cap (s) & Median E-DE $J$ & Median Std. DE $J$ & Reduction (\%) & Paired W/T/L \\
+\midrule
+C101 & 1 & 0.939 & 1.155 & 18.70 & 2/0/0 \\
+C101 & 2 & 0.906 & 1.144 & 20.81 & 2/0/0 \\
+C101 & 4 & 0.895 & 1.129 & 20.75 & 2/0/0 \\
+C101 & 8 & 0.869 & 1.116 & 22.17 & 2/0/0 \\
+R101 & 1 & 0.909 & 0.941 & 3.38 & 2/0/0 \\
+R101 & 2 & 0.907 & 0.925 & 2.00 & 1/0/1 \\
+R101 & 4 & 0.896 & 0.925 & 3.14 & 2/0/0 \\
+R101 & 8 & 0.880 & 0.917 & 4.00 & 2/0/0 \\
+RC101 & 1 & 0.865 & 0.947 & 8.73 & 2/0/0 \\
+RC101 & 2 & 0.864 & 0.947 & 8.83 & 2/0/0 \\
+RC101 & 4 & 0.847 & 0.945 & 10.39 & 2/0/0 \\
+RC101 & 8 & 0.845 & 0.923 & 8.44 & 2/0/0 \\
+\bottomrule
+\end{tabular}
+\caption{Secondary short-budget anytime profile on C101, R101, and RC101 under S3 with paired seeds 1--2. Lower $J$ is better. W/T/L denotes E-DE wins/ties/losses against Standard DE at the same instance, cap, and seed. This descriptive small-tier screen does not establish a general convergence rate or full-budget/tier-wide superiority.}
+\label{tab:anytime_profile_secondary}
+\end{table}

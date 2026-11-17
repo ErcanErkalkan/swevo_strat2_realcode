@@ -18,8 +18,6 @@ def write_stats_bundle(
     metric: str,
     control_method: str,
     master_path: Path,
-    pairwise_path: Path,
-    omnibus_path: Path,
     accepted_only: bool,
 ) -> None:
     pairwise = pairwise_wilcoxon(
@@ -29,8 +27,6 @@ def write_stats_bundle(
         accepted_only=accepted_only,
     )
     omnibus = friedman_by_instance(df, metric=metric, accepted_only=accepted_only)
-    pairwise.to_csv(pairwise_path, index=False)
-    omnibus.to_csv(omnibus_path, index=False)
     master = pd.concat(
         [pairwise.assign(section='pairwise'), omnibus.assign(section='omnibus')],
         ignore_index=True,
@@ -57,8 +53,6 @@ def main() -> None:
         metric=args.metric,
         control_method=args.control,
         master_path=base,
-        pairwise_path=base.with_name('pairwise_wilcoxon_effects.csv'),
-        omnibus_path=base.with_name('friedman_summary.csv'),
         accepted_only=False,
     )
     write_stats_bundle(
@@ -66,8 +60,6 @@ def main() -> None:
         metric=args.metric,
         control_method=args.control,
         master_path=accepted_base,
-        pairwise_path=accepted_base.with_name('pairwise_wilcoxon_effects_accepted_only.csv'),
-        omnibus_path=accepted_base.with_name('friedman_summary_accepted_only.csv'),
         accepted_only=True,
     )
     print(f"Wrote {base}")

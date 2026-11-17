@@ -1,44 +1,61 @@
 # Performance-First Method Notes
 
-## Goal
+## Submission goal
 
-The goal is not merely to run all methods, but to run them in a way that can survive a SWEVO review.
+The final paper is evaluated on the completed **10,800-run five-method primary comparison**, not on a new ablation campaign.
 
-## Performance priorities
+Primary methods:
+1. EDE
+2. StdDE
+3. ALNS_MS
+4. HGS_MS
+5. ILS_MS
 
-1. Keep the **same feasibility layer** for all methods.
-2. Match the **evaluation budget**, not only wall time.
-3. Log **time-to-first-feasible**, **repair activity**, and **rejections**.
-4. Separate:
-   - final accepted performance,
-   - search diagnostics,
-   - post hoc Pareto reporting.
-5. Use the same seed list across all methods.
+Each method has 2,160 completed runs over 36 instances, three scenarios, and 20 paired seeds.
 
-## Recommended implementation order
+## Evidence hierarchy
 
-1. Wire EDE and StdDE first.
-2. Lock the decoding / repair / local refinement layer.
-3. Add ALNS_MS with the exact same feasibility interface.
-4. Add HGS_MS with split decoding but the same acceptance semantics.
-5. Add ILS_MS on top of the same move operators.
-6. Only after all five are stable, activate A1/A2/A3 ablations.
+1. **Primary evidence:** integrated-method performance of EDE versus four independent comparator families.
+2. **Secondary evidence:** native cost, energy, CO2, runtime, and the model-based compute-energy proxy.
+3. **Diagnostic evidence:** time-to-first-feasible, repairs, rejected offspring, archives, and convergence traces.
+4. **Code-level component definitions:** A1/A2/A3 are retained for reproducibility but are not used for submission-primary causal attribution.
 
-## Performance traps to avoid
+## Why the historical ablation rows are excluded
 
-- giving HGS/ALNS richer repair logic than EDE,
-- hiding failed runs,
-- mixing accepted outputs with diagnostic violation counts,
-- comparing methods with different candidate-evaluation counts,
-- manually typing percentage claims into the manuscript.
+A1/A2/A3 were remediated on 2026-09-02 so that each variant removes only one conceptual EDE component family. The completed historical 6,480 ablation rows predate that locked definition. Reinterpreting them as clean single-factor evidence would be methodologically incorrect.
 
-## What counts as “best-performing” here
+The current submission therefore does not claim:
+- that seeding contributes a particular percentage,
+- that jDE adaptation contributes a particular percentage,
+- that LNS contributes a particular percentage,
+- or that one component is statistically more important than another.
 
-“Best-performing” must be shown on:
-- primary endpoint `j_scaled_final`,
-- accepted hard-feasible rate,
-- strict-duty compliance,
-- compute-side efficiency (`imp_per_wh`),
-- post hoc Pareto quality.
+No new ablation rerun is required because those component-effect claims are outside the manuscript scope.
 
-No single scalar alone is enough.
+## Fairness controls
+
+- common problem construction and final feasibility definitions,
+- same scenario instances,
+- paired seed lists,
+- tier-matched wall-clock caps,
+- block-level inference on 108 `instance_id × scenario_id` medians,
+- Holm correction for the primary EDE-versus-comparator family.
+
+`eval_budget` remains a nominal outer search-step guard rather than a fully instrumented count of every nested objective evaluation.
+
+## Compute-side reporting
+
+`compute_wh` is a runtime-based proxy using assumed tier power:
+- small: 52 W
+- medium: 86 W
+- large: 128 W
+
+It is not a physical hardware energy measurement. The paper must not claim measured compute-energy savings.
+
+## Quantitative authority
+
+This document intentionally does **not** duplicate final Friedman, Wilcoxon-Holm, Kendall W, tier-median, or percentage-reduction values. Those quantities are regenerated from the authoritative `generated_submission/master_runs.csv` ledger and may change when the locked runtime-cap remediation rows are replaced.
+
+For manuscript or release numbers, use only the current regenerated artifacts under `generated_submission/`, especially `master_stats.csv`, `summary_by_method.csv`, `robustness_by_scenario.csv`, `robustness_by_structure.csv`, `tier_native_endpoint_reductions.csv`, and `claim_evidence_map.csv`. `generated_submission/evidence_provenance.json` must be current before final validation or release packaging.
+
+The stable interpretation remains: the paper reports integrated-system performance for the five-method submission-primary comparison; it does not use the historical A1/A2/A3 rows for isolated component-effect estimates.

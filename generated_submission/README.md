@@ -1,16 +1,18 @@
-# Submission-primary evidence location
+# C15 evidence and its inputs
 
-The complete submission-primary evidence is intentionally distributed with the manuscript as the supplementary reproducibility archive rather than committed into this Git branch.
+This directory contains C15 derived evidence, not the seed-level primary ledger.
+The supplement provenance snapshot is preserved as
+`c15_supplement_core_provenance.json`. It refers to original relative paths
+and bytes in the supplement. Running the core command from this GitHub
+checkout creates a separate local `c15_core_provenance.json`.
 
-Authoritative archive at submission time:
+For reproduction from this checkout, copy these inputs from the exact C15
+supplement and verify each SHA-256 value before running the core command.
 
-- `SWEVO_FINAL_REPRODUCIBILITY_SUPPLEMENT_2026-09-03.zip`
-- SHA-256: `3aad983271e0e1cb6e7b4c62e38949906861ccf156b6e74722b6d500b6576a95`
-
-The archive contains the primary manifest, the 10,800-row `generated_submission/master_runs.csv` ledger, derived summaries/statistics, robustness evidence, claim-evidence map, final manuscript snapshot, and analysis-only validation pipeline.
-
-Primary evidence scope: 36 public benchmark instances × 3 operating scenarios × 5 methods × 20 paired seeds = 10,800 completed runs. Historical A1/A2/A3 rows are not part of submission-primary inference.
-
-Production hardware is documented as Dell Vostro 3888; Intel Core i5-10400 (6 cores/12 threads, 2.90 GHz); 16 GB RAM at 2400 MHz; Windows 11 Enterprise 64-bit build 26200; full storage/BIOS/motherboard details are included in the supplementary archive. The ledger does not embed a per-run hardware fingerprint, and `compute_wh` is not hardware-metered energy.
-
-This GitHub branch is a public submission-scope/freeze mirror. Do not substitute historical generated outputs from older commits for the supplementary submission-primary archive.
+| Input | SHA-256 |
+| --- | --- |
+| `generated_submission/master_runs.csv` | `b373820b3de0ce95d7daed4220502a19d0194c85eeba573a54a0ab9cfc75b86c` |
+| `configs/experiment_manifest_submission_primary.csv` | `596feb0639ac1413d65f1c0a107edd979a9772d4c1044f79a1c7b0d441ebc687` |
+| `configs/anytime_profile_locked.csv` | `b192dabe145d44f8a41151572bc55ee3197083c77c9d8243c6d83064e3aa02eb` |
+| `configs/operational_shift_stress_locked.csv` | `aba44122f5e02d48ad44ee4ca4493ac90f781d4fcc921adad83d4f2ac04593d4` |
+| `configs/parameter_sensitivity_locked.csv` | `21de27c26d4e030937f51b37d967759e54f981960cc7be6bfaaab4aada0fbf26` |

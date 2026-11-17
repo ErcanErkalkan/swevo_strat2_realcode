@@ -1,0 +1,6 @@
+config,runs,paired_blocks,hard_feasible_runs,strict_duty_runs,median_score,median_pct_delta_vs_base,max_abs_pct_delta_vs_base,wins_vs_base,ties_vs_base,losses_vs_base,lns_period,repair_budget
+BASE,9,9,9,9,0.8906200498584762,0.0,0.0,0,9,0,10,14
+LNS5,9,9,9,9,0.8905667849537634,0.0,1.9712849548895792,3,5,1,5,14
+LNS20,9,9,9,9,0.8906200498584762,0.0,1.5589276320050969,1,5,3,20,14
+REPAIR8,9,9,9,9,0.8918905321135725,0.0,1.5589276320050969,0,6,3,10,8
+REPAIR20,9,9,9,9,0.8918905321135725,0.14265143203301794,2.2934143249086256,0,4,5,10,20

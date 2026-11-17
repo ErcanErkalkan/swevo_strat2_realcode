@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover
     multipletests = None
 
 SUMMARY_GROUP_COLS = ["phase", "tier", "method_id"]
-PAIR_BLOCK_COLS = ["instance_id", "scenario_id", "seed"]
+PAIR_BLOCK_COLS = ["instance_id", "scenario_id"]
 
 
 def load_runs(path: str | Path) -> pd.DataFrame:
@@ -88,6 +88,14 @@ def pairwise_wilcoxon(
     accepted_only: bool = False,
 ) -> pd.DataFrame:
     working = filter_accepted(df) if accepted_only else df.copy()
+    # Seeds are stochastic replicates nested within an instance-scenario block.
+    # Collapse them first so pairwise inference uses the same independent
+    # experimental unit as the Friedman omnibus test.
+    working = (
+        working.groupby(PAIR_BLOCK_COLS + ["method_id"], dropna=False)[metric]
+        .median()
+        .reset_index()
+    )
     blocks = []
     methods = sorted(working["method_id"].dropna().unique())
     others = [m for m in methods if m != control_method]
@@ -110,10 +118,19 @@ def pairwise_wilcoxon(
             stat = np.nan
         else:
             stat, p = scipy_stats.wilcoxon(x, y, zero_method="wilcox", alternative="two-sided")
-        wins = np.sum(diff < 0)
-        losses = np.sum(diff > 0)
-        n = max(wins + losses, 1)
-        rank_biserial = (wins - losses) / n
+        # Matched-pairs rank-biserial effect size uses signed-rank mass,
+        # not the simple win-loss count.  With diff = control - comparator,
+        # negative values mean the control has the lower metric; therefore
+        # negative rank_biserial values favor EDE for minimization metrics.
+        nonzero = diff[~np.isclose(diff, 0.0)]
+        if nonzero.size == 0 or scipy_stats is None:
+            rank_biserial = 0.0 if nonzero.size == 0 else np.nan
+        else:
+            ranks = scipy_stats.rankdata(np.abs(nonzero), method="average")
+            w_plus = float(ranks[nonzero > 0].sum())
+            w_minus = float(ranks[nonzero < 0].sum())
+            denom = w_plus + w_minus
+            rank_biserial = (w_plus - w_minus) / denom if denom > 0 else 0.0
         blocks.append({
             "metric": metric,
             "control_method": control_method,

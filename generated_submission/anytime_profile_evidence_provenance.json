@@ -1,0 +1,50 @@
+{
+  "schema": "ede-secondary-anytime-profile-v1",
+  "input": {
+    "path": "configs/anytime_profile_locked.csv",
+    "bytes": 33402,
+    "sha256": "b192dabe145d44f8a41151572bc55ee3197083c77c9d8243c6d83064e3aa02eb"
+  },
+  "design": {
+    "instances": [
+      "C101",
+      "R101",
+      "RC101"
+    ],
+    "scenario": "S3_mixed_fleet_arc",
+    "methods": [
+      "EDE",
+      "StdDE"
+    ],
+    "seeds": [
+      1,
+      2
+    ],
+    "walltime_caps_s": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "eval_budget_guard": 1000,
+    "scope": "secondary_small_tier_s3_short_budget_descriptive_not_general_convergence"
+  },
+  "outputs": {
+    "anytime_profile_summary.csv": {
+      "bytes": 1133,
+      "sha256": "c9f56fbeb00a45311bfd53a2aca47b9b65610928359c31a8255d88037ef205e2"
+    },
+    "anytime_profile_auc.csv": {
+      "bytes": 471,
+      "sha256": "3b1637fc5f410ba8c674ab73dd635858a1c1d96a4becfa642c8ac478b43029f5"
+    },
+    "anytime_profile_overall.csv": {
+      "bytes": 401,
+      "sha256": "fcd2a0973a82e3972a4041a97a38cf7113cf2498b781e66d1d1ed2ad9e1e6770"
+    },
+    "table_anytime_profile.tex": {
+      "bytes": 1200,
+      "sha256": "a121a648ddecd69168751961f8feb430cce6e4d8b503efab5115d579583d1b16"
+    }
+  }
+}

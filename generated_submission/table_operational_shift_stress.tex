@@ -1,0 +1,18 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Scope} & \textbf{Runs} & \textbf{Hard feasible} & \textbf{Zero overtime} & \textbf{Bounded OT} & \textbf{Max OT} \\
+\midrule
+Small (100) & 6 & 6 & 6 & 0 & 0.000 \\
+Medium (200) & 6 & 6 & 3 & 3 & 0.341 \\
+Large (400) & 6 & 6 & 6 & 0 & 0.000 \\
+All & 18 & 18 & 15 & 3 & 0.341 \\
+\bottomrule
+\end{tabular}
+\caption{Secondary operational-semantics stress validation with three genuine non-overlapping shifts. All runs satisfy the hard feasibility predicate; bounded overtime is permitted by the model and is reported separately from strict zero-overtime duty compliance.}
+\label{tab:operational_shift_stress}
+\end{table}

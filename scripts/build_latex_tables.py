@@ -20,9 +20,12 @@ def _write_tables(summary: pd.DataFrame, stats: pd.DataFrame, out_dir: Path, suf
     )
     (out_dir / f"table_feasibility_summary{suffix}.tex").write_text(feas_tex)
 
-    pairwise = stats[stats["section"] == "pairwise"][
-        ["compare_method", "n_pairs", "p_value", "p_holm", "median_diff_control_minus_compare", "rank_biserial"]
-    ]
+    pairwise = stats[stats["section"] == "pairwise"][[
+        "compare_method", "n_pairs", "p_value", "p_holm", "median_diff_control_minus_compare", "rank_biserial"
+    ]].copy()
+    pairwise["n_pairs"] = pairwise["n_pairs"].astype(int).astype(str)
+    for col in ["p_value", "p_holm"]:
+        pairwise[col] = pairwise[col].map(lambda x: "NA" if pd.isna(x) else f"{float(x):.3e}")
     pairwise_tex = dataframe_to_latex_table(
         pairwise, "Pairwise control-vs-others results for EDE", "tab:posthoc_holm_generated"
     )

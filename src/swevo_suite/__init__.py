@@ -1,1 +1,1 @@
-__all__ = ['paths', 'schemas', 'manifest', 'checkpoint', 'stats', 'latex']
+__all__ = ['paths', 'schemas', 'manifest', 'stats', 'latex']

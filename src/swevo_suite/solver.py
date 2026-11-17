@@ -1195,7 +1195,10 @@ class MetaheuristicConfig:
     seed: int
     walltime_cap_s: float | None = None
     use_seed: bool = True
+    # jDE here means self-adaptation of F/CR only. Mutation strategy is controlled
+    # separately so ablations can isolate parameter adaptation cleanly.
     use_jde: bool = True
+    use_current_to_best: bool | None = None
     use_lns: bool = True
     lns_period: int = 10
     repair_budget: int = 12
@@ -1383,6 +1386,10 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
             best_perm = permutation_from_solution(best)
             worst = max(range(len(population)), key=lambda idx: dominance_key(population[idx][1]))
             population[worst] = (keys_from_permutation(best_perm, rng), best, cfg.fixed_F, cfg.fixed_CR)
+    # Preserve historical behavior unless a comparator explicitly overrides it:
+    # EDE (use_jde=True) keeps current-to-best; StdDE (use_jde=False) keeps rand/1.
+    use_current_to_best = cfg.use_jde if cfg.use_current_to_best is None else cfg.use_current_to_best
+
     gen = 0
     stagnation_gens = 0
     if len(population) < 4:
@@ -1417,7 +1424,7 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 # diversity feedback
                 F = min(0.95, max(0.5, F * (1.0 + 0.35 * (0.10 - div))))
                 CR = min(1.0, max(0.55, CR * (1.0 - 0.25 * (0.10 - div))))
-            if cfg.use_jde:
+            if use_current_to_best:
                 donor = target_keys + 0.35 * (best_keys - target_keys) + F * (population[r1][0] - population[r2][0])
             else:
                 donor = population[r1][0] + F * (population[r2][0] - population[r3][0])
@@ -1458,8 +1465,7 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 best = lns_sol
                 improved_this_gen = True
         if (
-            cfg.use_jde
-            and cfg.use_lns
+            cfg.use_lns
             and stagnation_gens >= 2
             and evals < cfg.eval_budget
             and not _time_exceeded(main_deadline)
@@ -1526,8 +1532,7 @@ def jde_evolve(problem: ProblemInstance, cfg: MetaheuristicConfig, source_tag: s
                 population[pos] = (keys, sol, cfg.fixed_F, cfg.fixed_CR)
         stagnation_gens = 0 if improved_this_gen else stagnation_gens + 1
     if (
-        cfg.use_jde
-        and cfg.use_route_alns_endgame
+        cfg.use_route_alns_endgame
         and cfg.walltime_cap_s is not None
         and 30 < cfg.walltime_cap_s <= 120
         and evals < cfg.eval_budget
@@ -1578,6 +1583,7 @@ def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Sol
     current = bounded_repair(problem, seed_sol, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
     current = try_improve_with_local_search(problem, current, references, max_moves=cfg.local_search_moves, deadline=deadline)
     best = current
+    init_best = best.score
     archive = non_dominated_insert([], best)
     destroy_names = ["random", "worst", "related", "border"]
     weights = {name: 1.0 for name in destroy_names}
@@ -1645,6 +1651,7 @@ def alns_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Sol
     stats.archive_size_final = len(archive)
     if _time_exceeded(deadline):
         stats.note("walltime_hit=1")
+    stats.note(f"init_best={init_best:.6f}")
     return best, stats, archive
 
 
@@ -1672,13 +1679,21 @@ def hgs_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
     population: list[tuple[list[int], Solution]] = []
     seed_perm = seed_permutation(problem, rng)
     seed_sol = evaluate_solution(problem, decode_permutation(problem, seed_perm, references), references)
-    population.append((seed_perm, try_improve_with_local_search(problem, seed_sol, references, max_moves=cfg.local_search_moves, deadline=deadline)))
+    seed_sol = try_improve_with_local_search(problem, seed_sol, references, max_moves=cfg.local_search_moves, deadline=deadline)
+    population.append((seed_perm, seed_sol))
+    if seed_sol.accepted:
+        stats.first_feasible_eval = 1
+        stats.first_feasible_sec = time.perf_counter() - start
     while len(population) < pop_size and not _time_exceeded(deadline):
         perm = list(problem.customer_ids)
         rng.shuffle(perm)
         sol = evaluate_solution(problem, decode_permutation(problem, perm, references), references)
         population.append((perm, sol))
+        if sol.accepted and stats.first_feasible_eval is None:
+            stats.first_feasible_eval = len(population)
+            stats.first_feasible_sec = time.perf_counter() - start
     best = min((s for _, s in population), key=dominance_key)
+    init_best = best.score
     archive = []
     for _, sol in population:
         archive = non_dominated_insert(archive, sol)
@@ -1693,6 +1708,9 @@ def hgs_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
         child_sol = bounded_repair(problem, child_sol, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
         child_sol = try_improve_with_local_search(problem, child_sol, references, max_moves=cfg.local_search_moves, deadline=deadline)
         evals += 1
+        if child_sol.accepted and stats.first_feasible_eval is None:
+            stats.first_feasible_eval = evals
+            stats.first_feasible_sec = time.perf_counter() - start
         archive = non_dominated_insert(archive, child_sol)
         population.append((child_perm, child_sol))
         population.sort(key=lambda item: (dominance_key(item[1]), diversity_penalty(item[0], population)))
@@ -1703,6 +1721,7 @@ def hgs_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
     stats.archive_size_final = len(archive)
     if _time_exceeded(deadline):
         stats.note("walltime_hit=1")
+    stats.note(f"init_best={init_best:.6f}")
     return best, stats, archive
 
 
@@ -1729,8 +1748,12 @@ def ils_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
     current = bounded_repair(problem, current, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
     current = try_improve_with_local_search(problem, current, references, max_moves=cfg.local_search_moves * 2, deadline=deadline)
     best = current
+    init_best = best.score
     archive = non_dominated_insert([], best)
     evals = 1
+    if best.accepted:
+        stats.first_feasible_eval = evals
+        stats.first_feasible_sec = time.perf_counter() - start
     temperature = 0.05
     while evals < cfg.eval_budget and not _time_exceeded(deadline):
         base_perm = permutation_from_solution(current)
@@ -1748,6 +1771,9 @@ def ils_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
         cand = bounded_repair(problem, cand, references, stats, max_attempts=cfg.repair_budget, deadline=deadline)
         cand = try_improve_with_local_search(problem, cand, references, max_moves=cfg.local_search_moves, deadline=deadline)
         evals += 1
+        if cand.accepted and stats.first_feasible_eval is None:
+            stats.first_feasible_eval = evals
+            stats.first_feasible_sec = time.perf_counter() - start
         archive = non_dominated_insert(archive, cand)
         delta = cand.score - current.score
         if dominance_key(cand) < dominance_key(current) or rng.random() < math.exp(-max(0.0, delta) / max(temperature, 1e-6)):
@@ -1761,4 +1787,5 @@ def ils_search(problem: ProblemInstance, cfg: MetaheuristicConfig) -> tuple[Solu
     stats.archive_size_final = len(archive)
     if _time_exceeded(deadline):
         stats.note("walltime_hit=1")
+    stats.note(f"init_best={init_best:.6f}")
     return best, stats, archive

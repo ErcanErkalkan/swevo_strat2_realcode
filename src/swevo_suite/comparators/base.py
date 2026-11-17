@@ -27,9 +27,13 @@ class BaseComparator:
 
     def run(self, plan: RunPlan) -> RunResult:
         t0 = time.perf_counter()
+        cpu_t0 = time.process_time()
         best, stats, archive = self.solve(plan)
         runtime = time.perf_counter() - t0
-        compute_wh = runtime * self._power_watts(plan.tier) / 3600.0
+        process_cpu_sec = time.process_time() - cpu_t0
+        assumed_power_w = self._power_watts(plan.tier)
+        # Model-based compute-energy proxy, not a hardware power measurement.
+        compute_wh = runtime * assumed_power_w / 3600.0
         init_best = None
         for note in stats.notes:
             if note.startswith("init_best="):
@@ -38,7 +42,15 @@ class BaseComparator:
             init_best = best.score
         improvement_abs = max(0.0, init_best - best.score)
         improvement_pct = 100.0 * improvement_abs / max(init_best, 1e-9)
-        notes = [f"real_solver:{self.method_id}", f"archive={len(archive)}", *stats.notes]
+        notes = [
+            f"real_solver:{self.method_id}",
+            f"archive={len(archive)}",
+            "compute_energy_proxy=runtime_x_assumed_tier_power",
+            f"assumed_power_w={assumed_power_w:.3f}",
+            f"process_cpu_sec={process_cpu_sec:.6f}",
+            f"runtime_minus_cap_s={runtime - float(plan.walltime_cap_s):.6f}" if plan.walltime_cap_s else "runtime_minus_cap_s=NA",
+            *stats.notes,
+        ]
         return RunResult(
             run_id=plan.run_id,
             phase=plan.phase,

@@ -1,0 +1,16 @@
+tier,method_id,runs,above_nominal,above_tolerance
+large,ALNS_MS,720,720,1
+large,EDE,720,720,1
+large,HGS_MS,720,720,1
+large,ILS_MS,720,720,1
+large,StdDE,720,720,1
+medium,ALNS_MS,720,720,0
+medium,EDE,720,720,0
+medium,HGS_MS,720,720,0
+medium,ILS_MS,720,720,0
+medium,StdDE,720,720,0
+small,ALNS_MS,720,720,0
+small,EDE,720,720,0
+small,HGS_MS,720,720,0
+small,ILS_MS,720,720,0
+small,StdDE,720,720,0

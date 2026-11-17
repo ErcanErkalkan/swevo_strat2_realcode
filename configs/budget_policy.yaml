@@ -1,31 +1,21 @@
-primary_fairness_currency: evaluated_candidates
+primary_fairness_currency: wall_clock_by_tier
+runtime_validation_tolerance_s: 10
 budgets:
   small:
     customers: 100
-    population_size: 50
-    generations: 500
-    total_eval_budget: 25050
+    nominal_outer_step_guard: 25050
     walltime_cap_s: 1800
-    local_refinement_move_budget: 400
-    repair_attempt_budget: 40
   medium:
     customers: 200
-    population_size: 80
-    generations: 500
-    total_eval_budget: 40080
+    nominal_outer_step_guard: 40080
     walltime_cap_s: 3600
-    local_refinement_move_budget: 800
-    repair_attempt_budget: 60
   large:
     customers: 400
-    population_size: 100
-    generations: 800
-    total_eval_budget: 80100
+    nominal_outer_step_guard: 80100
     walltime_cap_s: 7200
-    local_refinement_move_budget: 1200
-    repair_attempt_budget: 80
 shared_constants:
   overtime_cap_eta: 0.05
+  overtime_penalty_kappa_shift: 0.25
   epsilon: 1.0e-9
   epsilon_energy: 1.0e-9
   objective_weights:
@@ -39,4 +29,8 @@ shared_constants:
     CR_range: [0.60, 1.00]
   lns:
     period_generations: 10
-    destruction_fraction: 0.10
+notes:
+  - "Runtime-cap validation permits at most 10 s of logging/scheduling tolerance; this is not additional search budget."
+  - "Wall-clock time, not eval_budget, is the submission-primary fairness currency."
+  - "The outer-step guard is not a complete nested objective-evaluation count."
+  - "Method-specific repair/local-search/population settings are defined in comparator code and reported in the manuscript reproducibility appendix."

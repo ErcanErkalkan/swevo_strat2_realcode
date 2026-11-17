@@ -1,0 +1,45 @@
+{
+  "schema": "ede-secondary-parameter-sensitivity-v1",
+  "input": {
+    "path": "configs/parameter_sensitivity_locked.csv",
+    "bytes": 28899,
+    "sha256": "21de27c26d4e030937f51b37d967759e54f981960cc7be6bfaaab4aada0fbf26"
+  },
+  "design": {
+    "instances": [
+      "C101",
+      "R101",
+      "RC101"
+    ],
+    "scenario": "S3_mixed_fleet_arc",
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "configs": [
+      "BASE",
+      "LNS5",
+      "LNS20",
+      "REPAIR8",
+      "REPAIR20"
+    ],
+    "walltime_cap_s": 3,
+    "eval_budget": 300,
+    "scope": "secondary_local_short_budget_not_full_tuning"
+  },
+  "outputs": {
+    "parameter_sensitivity_summary.csv": {
+      "bytes": 540,
+      "sha256": "4b55e3034cb94c4c28f29868710815709c2f14bc225fd9d190a6895b2cdf6d82"
+    },
+    "parameter_sensitivity_stats.csv": {
+      "bytes": 282,
+      "sha256": "3908613013f639fb2d77d5b40fdd5a800b218a0d11ac90df5417a86c6305d1df"
+    },
+    "table_parameter_sensitivity.tex": {
+      "bytes": 906,
+      "sha256": "ed9d09cb28692e92dde0861accc5b03cda5d4be8029130c2e15dce7d2e0c0aca"
+    }
+  }
+}
