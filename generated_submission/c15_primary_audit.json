@@ -1,7 +1,8 @@
 {
-  "schema": "c15-primary-audit-v1",
+  "schema": "c15.1-primary-audit-v2",
   "source_sha256": "b373820b3de0ce95d7daed4220502a19d0194c85eeba573a54a0ab9cfc75b86c",
   "manifest_sha256": "596feb0639ac1413d65f1c0a107edd979a9772d4c1044f79a1c7b0d441ebc687",
+  "frozen_reference_sha256": "77d2ef7c153ddc668a7d5d72c15fd9559ca57df2209bb4fe01d3a78818465336",
   "primary_rows": 10800,
   "unique_run_ids": 10800,
   "missing": 0,
@@ -11,6 +12,8 @@
   "strict": 10800,
   "historical_over_tolerance": 5,
   "sensitivity_rows": 10795,
+  "sensitivity_above_nominal": 10795,
+  "sensitivity_interpretation": "Retained rows satisfy nominal cap plus 10-second logging tolerance; not necessarily nominal cap",
   "instances": 36,
   "cells": 108,
   "bootstrap_reps": 20000,

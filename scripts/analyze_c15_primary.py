@@ -75,7 +75,8 @@ def analyze(root):
     runtime=joined.groupby(['tier','method_id']).agg(runs=('run_id','size'),above_nominal=('nominal_overrun','sum'),above_tolerance=('over_tolerance','sum')).reset_index()
     runtime.to_csv(out/'c15_runtime_by_method_tier.csv',index=False)
     # Reconcile independently regenerated 108-cell statistics with C14 artifacts.
-    old=pd.read_csv(out/'protocol_sensitivity.csv')
+    reference=root/'references/protocol_sensitivity_C14.csv'
+    old=pd.read_csv(reference)
     new=stats[stats.scope=='108_instance_scenario_cells']
     assert np.isclose(new.iloc[0].statistic,old[(old.scope=='all_10800')&(old.section=='omnibus')].iloc[0].statistic,rtol=1e-10)
     for method in METHODS[1:]:
@@ -84,7 +85,7 @@ def analyze(root):
     sensitivity=stats[stats.scope=='10795_runtime_sensitivity'].reset_index(drop=True)
     for col in ['statistic','p_value','p_holm']:
         assert np.allclose(new[col].to_numpy(float),sensitivity[col].to_numpy(float),rtol=1e-10,atol=1e-100,equal_nan=True),col
-    report=dict(schema='c15-primary-audit-v1',source_sha256=sha(p),manifest_sha256=sha(mp),primary_rows=len(d),unique_run_ids=d.run_id.nunique(),missing=0,duplicates=0,unexpected=0,accepted=int(d.accepted_final.sum()),strict=int(d.strict_duty_final.sum()),historical_over_tolerance=len(over),sensitivity_rows=len(clean),instances=len(inst),cells=len(cells),bootstrap_reps=REPS,bootstrap_seed=SEED,c14_inference_reconciled=True,sensitivity_invariant=True)
+    report=dict(schema='c15.1-primary-audit-v2',source_sha256=sha(p),manifest_sha256=sha(mp),frozen_reference_sha256=sha(reference),primary_rows=len(d),unique_run_ids=d.run_id.nunique(),missing=0,duplicates=0,unexpected=0,accepted=int(d.accepted_final.sum()),strict=int(d.strict_duty_final.sum()),historical_over_tolerance=len(over),sensitivity_rows=len(clean),sensitivity_above_nominal=int((clean.runtime_sec>clean.tier.map(CAPS)).sum()),sensitivity_interpretation='Retained rows satisfy nominal cap plus 10-second logging tolerance; not necessarily nominal cap',instances=len(inst),cells=len(cells),bootstrap_reps=REPS,bootstrap_seed=SEED,c14_inference_reconciled=True,sensitivity_invariant=True)
     (out/'c15_primary_audit.json').write_text(json.dumps(report,indent=2)+'\n')
     pair=stats[(stats.scope=='36_instances')&(stats.test=='Wilcoxon')]
     latex=['\\begin{tabular}{lrrr}','\\toprule','Comparator & Median difference & $p_{Holm}$ & Rank biserial \\\\','\\midrule']
@@ -101,11 +102,13 @@ def analyze(root):
         group=summary[summary.tier==tier].set_index('method_id').score_median
         best=group.drop('EDE').idxmin();red=(1-group.EDE/group[best])*100;std=(1-group.EDE/group.StdDE)*100
         reductions[tier]=dict(best_method=best,best_reduction_pct=red,stdde_reduction_pct=std)
-        latex.append(f'{tier.capitalize()} & {group.EDE:.3f} & {group.StdDE:.3f} & {best.replace("_","-")}: {group[best]:.3f} & {red:.1f}\\% \\\\')
+        latex.append(f'{tier.capitalize()} & {group.EDE:.3f} & {group.StdDE:.3f} & {best.replace("_","-")}: {group[best]:.3f} & {red:.2f}\\% \\\\')
     (out/'table_c15_tier_comparison.tex').write_text('\n'.join(latex+['\\bottomrule','\\end{tabular}'])+'\n')
     fr36=stats[(stats.scope=='36_instances')&(stats.test=='Friedman')].iloc[0]
     macros=[f'\\newcommand{{\\CFifteenFriedman}}{{{fr36.statistic:.2f}}}',f'\\newcommand{{\\CFifteenKendall}}{{{fr36.kendalls_w:.3f}}}']
-    for tier,value in reductions.items():macros.append(f'\\newcommand{{\\CFifteenBest{tier.capitalize()}}}{{{value["best_reduction_pct"]:.1f}\\%}}')
+    for tier,value in reductions.items():
+        macros.append(f'\\newcommand{{\\CFifteenBest{tier.capitalize()}}}{{{value["best_reduction_pct"]:.2f}\\%}}')
+        macros.append(f'\\newcommand{{\\CFifteenStd{tier.capitalize()}}}{{{value["stdde_reduction_pct"]:.2f}\\%}}')
     (out/'c15_macros.tex').write_text('\n'.join(macros)+'\n')
     (out/'c15_tier_effects.json').write_text(json.dumps(reductions,indent=2)+'\n')
     print(json.dumps(report,indent=2)); print(pair.to_string(index=False)); return report
