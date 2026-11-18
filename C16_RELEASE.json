@@ -1,0 +1,15 @@
+{
+  "version": "C16.0",
+  "release_date": "2026-11-18",
+  "scope": "Public code, tests and derived summaries",
+  "change_type": "Consolidation only",
+  "baseline_code_commit": "77e55e46ec9c3cb5ae4a242ffc8769e1e23af4d8",
+  "scientific_inputs_changed": false,
+  "primary_runs": 10800,
+  "ablation": {
+    "state": "open",
+    "records_in_snapshot": 48,
+    "planned": 1080
+  },
+  "journal_submission": false
+}

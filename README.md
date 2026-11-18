@@ -1,20 +1,27 @@
-# C15.1 public code and derived summaries
+# EDE Sustainable VRPTW — C16.0
 
-Python >=3.11 is required; CPython 3.14.3 on Windows was tested.
-Install `requirements-c151.lock.txt`, then run `python -m pytest -q -p no:cacheprovider`.
-Synthetic fixtures exercise empty/malformed ablation grids and record validity;
-they are not scientific outcomes. The actual confirmatory campaign remains open.
+This branch is the public code reference for C16.0. C16.0 consolidates the
+verified manuscript, frozen reproducibility evidence and ablation records under
+one release identifier. The solver, methods, budgets, seeds, and recorded
+outcomes are unchanged. This checkout contains only public code, tests,
+documentation and derived summaries.
 
-The public tree contains code, tests, documentation and derived summaries only.
-The manuscript and raw primary/secondary outcomes are distributed separately in
-the C15.1 reviewer supplement. Run `scripts/finalize_c15.py --core` from that
-complete supplement; this public checkout does not itself contain all raw inputs.
-See scripts/c151_release_contract.py RAW_INPUTS for the exact supplement-only
-inputs. The core requires neither the historical archive nor portal documents.
+Tested with CPython 3.12.14. Install the pinned environment and run the tests
+from the repository root:
+
+    python -m pip install -r requirements-c151.lock.txt
+    python -m pytest -q -p no:cacheprovider
+
+The complete author package includes the separate reviewer supplement and the
+primary raw ledger. Use its extracted workspace for full evidence reproduction
+with `python scripts/finalize_c15.py --core`. This public checkout intentionally
+does not contain the manuscript, raw experimental records, benchmark copies, or
+operational notes. The name of the existing dependency lock is preserved to
+keep the reproducibility inputs unchanged.
 
 The integrated E-DE result concerns lower composite model scores among feasible
-solutions under overlapping full-horizon regimes. It establishes no field energy
-savings, universal solver superiority or isolated component effect. This revision
-fixes scientific-record validation and input/output provenance without changing
-the frozen solver, budgets, seeds or raw outcomes. Old release branches remain
-unchanged. No journal submission or acceptance is asserted.
+solutions under overlapping full-horizon regimes. It establishes no field
+energy savings, universal solver superiority, or isolated component effect.
+The confirmatory campaign is open (48 of 1,080 records in the consolidated
+snapshot). No journal submission or acceptance is asserted. Earlier branches
+are retained for history and are not the current public reference.
