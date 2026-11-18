@@ -6,6 +6,9 @@ parallelism; uncertain interrupted attempts require an explicit recorded decisio
 from pathlib import Path
 import argparse,csv,datetime,hashlib,importlib.util,json,os,platform,socket,sys,time,uuid
 
+# Do not create bytecode files in the immutable frozen source context.
+sys.dont_write_bytecode=True
+
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def utc(): return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def atomic(path,value):
@@ -46,7 +49,8 @@ def execute(plan,run,out,metadata):
         record.update(result_status='interrupted' if isinstance(exc,(KeyboardInterrupt,SystemExit)) else 'failed',error=f'{type(exc).__name__}: {exc}')
         raise
     finally:
-        record.update(end_utc=utc(),wall_elapsed_s=time.time()-wall,monotonic_elapsed_s=time.perf_counter()-mono,process_cpu_s=time.process_time()-cpu)
+        duration=time.perf_counter()-mono
+        record.update(end_utc=utc(),wall_elapsed_s=duration,monotonic_elapsed_s=duration,realtime_elapsed_s=time.time()-wall,process_cpu_s=time.process_time()-cpu)
         elapsed=max(record['wall_elapsed_s'],float(record.get('result',{}).get('runtime_sec',0)))
         record['runtime_status']=classify(elapsed,plan.walltime_cap_s)
         record['nominal_cap_s']=plan.walltime_cap_s;record['logging_tolerance_s']=10
@@ -95,6 +99,12 @@ def main():
             def run(p):
                 cls=REGISTRY[p.method_id];method=cls(p.method_id) if p.method_id in locked.ABLATIONS else cls();return method.run(p)
             r=execute(plan,run,out,metadata); print(plan.run_id,r['result_status'],r['runtime_status'],flush=True)
+            # Audit/update outside the frozen search clock, after every atomic
+            # terminal record. This code never alters the locked solver.
+            monitor=Path(__file__).with_name('c17_monitor.py')
+            if monitor.is_file():
+                import subprocess
+                subprocess.run([sys.executable,str(monitor)],cwd=monitor.parents[1],check=True,stdout=subprocess.DEVNULL)
     finally:
         if keepawake:keepawake(0x80000000)
 if __name__=='__main__':main()

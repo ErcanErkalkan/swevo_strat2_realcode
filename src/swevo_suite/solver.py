@@ -10,6 +10,8 @@ import numpy as np
 
 from .models import Customer, ProblemInstance, Route, RouteMetrics, SearchStats, Solution
 
+C17_REMOVAL_SELECTION = "boundary"
+
 
 def euclidean(a: tuple[float, float], b: tuple[float, float]) -> float:
     return math.hypot(a[0] - b[0], a[1] - b[1])
@@ -602,7 +604,10 @@ def boundary_lns(
     if not boundary:
         boundary = permutation_from_solution(sol)
     k = max(1, int(len(boundary) * destroy_frac))
-    removed = set(rng.sample(boundary, min(k, len(boundary))))
+    # C17 instrumented cohort only: retain original removal COUNT and all
+    # subsequent RNG/search operations; change only the selection population.
+    pool = permutation_from_solution(sol) if C17_REMOVAL_SELECTION == "random" else boundary
+    removed = set(rng.sample(pool, min(k, len(boundary))))
     base_routes = []
     removed_list = []
     for route in sol.routes:
