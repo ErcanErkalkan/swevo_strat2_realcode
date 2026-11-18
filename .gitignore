@@ -1,12 +1,26 @@
+# Local Python environments and disposable caches
 .venv/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
-archive/
-submission/
-manuscript/
+.ruff_cache/
+
+# Complete local research materials, outside the public-code distribution
+/archive/
+/submission/
+/manuscript/
 /data/primary/
 /data/secondary/
 /data/ablation/
+/data/benchmarks/
 /configs/experiment_manifest_submission_primary.csv
-results/ablation_execution/
+/results/ablation/
+/results/ablation_execution/
+/results/primary/provenance.json
+
+# Temporary tool and operating-system files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
