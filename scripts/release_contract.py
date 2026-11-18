@@ -1,0 +1,12 @@
+"""Explicit distribution boundaries for reviewer, public code and portal files."""
+from core_contract import CONFIG_INPUTS,SECONDARY_INPUTS,TEMPLATE_INPUTS,CORE_SCRIPTS,OUTPUTS
+SRC_FILES=['__init__.py','benchmark.py','cli.py','latex.py','manifest.py','models.py','paths.py','schemas.py','smoke.py','solver.py','stats.py','comparators/__init__.py','comparators/ablations.py','comparators/alns_ms.py','comparators/base.py','comparators/ede.py','comparators/hgs_ms.py','comparators/ils_ms.py','comparators/stdde.py']
+TESTS=['test_benchmark_public_ids.py','test_execution_integrity.py','test_claim_evidence_map.py','test_ede_config.py','test_stats_views.py','test_validation.py','test_ablation_audit.py','test_provenance.py','test_release.py','test_model_contract.py']
+SCRIPTS=CORE_SCRIPTS+['audit_ablation.py','run_ablation.py','analyze_ablation.py','compare_outputs.py','acquire_primary_benchmarks.py','release_contract.py']
+DOCS=['PROJECT_OVERVIEW.md','METHODOLOGY.md','REPRODUCIBILITY.md','STATISTICAL_ANALYSIS.md','AUDIT_REPORT.md','ABLATION_CONTINUATION.md']
+STATUS_FILES=['status.json','missing.csv','validation_issues.csv','exclusion_ids.csv']
+SUPPLEMENT_FILES=['README.md','pyproject.toml','requirements.txt','requirements.lock.txt','CHANGELOG.md','data/ablation/preregistration.md','data/reference/protocol_sensitivity.csv','data/primary/runs.csv','results/primary/provenance.json',*['docs/'+s for s in DOCS],*['results/ablation/'+s for s in STATUS_FILES],*['src/swevo_suite/'+s for s in SRC_FILES],*['scripts/'+s for s in SCRIPTS],*['tests/'+s for s in TESTS],*['configs/'+s for s in CONFIG_INPUTS],*['data/secondary/'+s for s in SECONDARY_INPUTS],*['templates/'+s for s in TEMPLATE_INPUTS],*['results/primary/'+s for s in OUTPUTS]]
+RAW_INPUTS={'data/primary/runs.csv','configs/experiment_manifest_submission_primary.csv',*['data/secondary/'+s for s in SECONDARY_INPUTS]}
+PUBLIC_FILES=[s for s in SUPPLEMENT_FILES if s not in RAW_INPUTS and not s.startswith(('results/ablation/','data/ablation/')) and s!='results/primary/provenance.json']
+MANUSCRIPT_FILES=['main.tex','references.bib','bibliography.bst','manuscript.pdf','graphical_abstract.tex','graphical_abstract.pdf','graphical_abstract.png','highlights.txt','cover_letter.txt','build_provenance.json']
+TEX_INPUTS=['macros.tex','table_instance_sensitivity.tex','table_cluster_ci.tex','table_tier_comparison.tex','table_anytime_profile.tex']

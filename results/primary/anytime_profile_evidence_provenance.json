@@ -1,7 +1,7 @@
 {
   "schema": "ede-secondary-anytime-profile-v1",
   "input": {
-    "path": "configs/anytime_profile_locked.csv",
+    "path": "data/secondary/anytime_profile_locked.csv",
     "bytes": 33402,
     "sha256": "b192dabe145d44f8a41151572bc55ee3197083c77c9d8243c6d83064e3aa02eb"
   },

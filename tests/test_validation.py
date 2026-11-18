@@ -14,7 +14,7 @@ def test_generated_dir_creation_does_not_recreate_legacy_subdirs(tmp_path, monke
     from importlib.util import module_from_spec, spec_from_file_location
 
     root = Path(__file__).resolve().parents[1]
-    target = tmp_path / "generated_submission"
+    target = tmp_path / "results/primary"
     monkeypatch.setenv("SWEVO_GENERATED_DIR", str(target))
     spec = spec_from_file_location("swevo_paths_test", root / "src" / "swevo_suite" / "paths.py")
     module = module_from_spec(spec)

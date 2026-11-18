@@ -15,10 +15,9 @@ def _project_path_from_env(name: str, default: Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
-# Development defaults remain backward compatible. Submission/finalization
-# explicitly locks manuscript-facing artifacts with:
-#   SWEVO_GENERATED_DIR=generated_submission
-GENERATED = _project_path_from_env("SWEVO_GENERATED_DIR", ROOT / "generated")
+# Generated evidence has one default namespace. SWEVO_GENERATED_DIR
+# may point a reproduction copy to another output directory.
+GENERATED = _project_path_from_env("SWEVO_GENERATED_DIR", ROOT / "results" / "primary")
 
 
 def ensure_generated_dirs() -> None:

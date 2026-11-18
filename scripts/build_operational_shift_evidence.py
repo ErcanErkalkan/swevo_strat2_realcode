@@ -79,9 +79,9 @@ def table_tex(summary: pd.DataFrame) -> str:
 
 def main():
     ap=argparse.ArgumentParser()
-    ap.add_argument('--ledger',default='configs/operational_shift_stress_locked.csv')
-    ap.add_argument('--solomon-audit',default='configs/solomon_equal_3shift_feasibility_audit.csv')
-    ap.add_argument('--out',default='generated_submission')
+    ap.add_argument('--ledger',default='data/secondary/operational_shift_stress_locked.csv')
+    ap.add_argument('--solomon-audit',default='data/secondary/solomon_equal_3shift_feasibility_audit.csv')
+    ap.add_argument('--out',default='results/primary')
     args=ap.parse_args()
     ledger_path=(ROOT/args.ledger).resolve() if not Path(args.ledger).is_absolute() else Path(args.ledger)
     audit_path=(ROOT/args.solomon_audit).resolve() if not Path(args.solomon_audit).is_absolute() else Path(args.solomon_audit)

@@ -117,7 +117,7 @@ def main(path_str: str, manifest_str: str | None = None, tolerance_s: float = 10
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("path", nargs="?", default="generated_submission/master_runs.csv")
+    parser.add_argument("path", nargs="?", default="data/primary/runs.csv")
     parser.add_argument("--manifest", default=None)
     parser.add_argument("--runtime-tolerance-s", type=float, default=10.0)
     parser.add_argument(

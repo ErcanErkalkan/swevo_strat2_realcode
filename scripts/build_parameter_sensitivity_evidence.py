@@ -24,7 +24,7 @@ def holm_adjust(raw):
     return adj
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--ledger',default='configs/parameter_sensitivity_locked.csv'); ap.add_argument('--out',default='generated_submission'); a=ap.parse_args()
+    ap=argparse.ArgumentParser(); ap.add_argument('--ledger',default='data/secondary/parameter_sensitivity_locked.csv'); ap.add_argument('--out',default='results/primary'); a=ap.parse_args()
     ledger=Path(a.ledger); out=Path(a.out); out.mkdir(parents=True,exist_ok=True)
     df=pd.read_csv(ledger)
     required={'instance_id','scenario_id','method_id','seed','accepted_final','strict_duty_final','v_cap_final','v_tw_final','v_shift_final','j_scaled_final','lns_period','repair_budget','runtime_sec'}

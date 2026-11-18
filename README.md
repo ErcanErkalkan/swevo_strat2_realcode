@@ -1,27 +1,7 @@
-# EDE Sustainable VRPTW — C16.0
+# EDE Sustainable VRPTW: public code
 
-This branch is the public code reference for C16.0. C16.0 consolidates the
-verified manuscript, frozen reproducibility evidence and ablation records under
-one release identifier. The solver, methods, budgets, seeds, and recorded
-outcomes are unchanged. This checkout contains only public code, tests,
-documentation and derived summaries.
+Code, tests, documentation and derived summaries for the integrated E-DE benchmark study. Python >=3.11; tested CPython 3.14.3 / Windows 11 build 26200. Install `requirements.lock.txt`, then run `python -m pytest -q -p no:cacheprovider`.
 
-Tested with CPython 3.12.14. Install the pinned environment and run the tests
-from the repository root:
+The public snapshot excludes manuscript assets, raw primary/secondary outcomes, the primary run manifest, benchmark bytes and private operational records. The complete reviewer supplement supplies all core inputs. `python scripts/finalize.py --core` reproduces 41 outputs from that supplement without manuscript or archive dependencies. The public checkout alone cannot reproduce outputs requiring the withheld raw inputs.
 
-    python -m pip install -r requirements-c151.lock.txt
-    python -m pytest -q -p no:cacheprovider
-
-The complete author package includes the separate reviewer supplement and the
-primary raw ledger. Use its extracted workspace for full evidence reproduction
-with `python scripts/finalize_c15.py --core`. This public checkout intentionally
-does not contain the manuscript, raw experimental records, benchmark copies, or
-operational notes. The name of the existing dependency lock is preserved to
-keep the reproducibility inputs unchanged.
-
-The integrated E-DE result concerns lower composite model scores among feasible
-solutions under overlapping full-horizon regimes. It establishes no field
-energy savings, universal solver superiority, or isolated component effect.
-The confirmatory campaign is open (48 of 1,080 records in the consolidated
-snapshot). No journal submission or acceptance is asserted. Earlier branches
-are retained for history and are not the current public reference.
+All five methods finish feasible with zero overtime. E-DE obtains lower composite model scores among feasible solutions; this is not measured field savings or a universal solver-family ranking. Common nominal search caps differ from recorded elapsed time. The confirmatory component-ablation campaign remains open (48 valid of 1,080); no isolated component claim is supported. Synthetic regression fixtures are not scientific outcomes. See docs/ for methods, scope and reproduction. Historical release branches remain unchanged. No journal submission is asserted.

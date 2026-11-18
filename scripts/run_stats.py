@@ -37,7 +37,7 @@ def write_stats_bundle(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('src', nargs='?', default=str(GENERATED / 'master_runs.csv'))
+    parser.add_argument('src', nargs='?', default=str(Path(__file__).resolve().parents[1] / 'data/primary/runs.csv'))
     parser.add_argument('dst', nargs='?', default=str(GENERATED / 'master_stats.csv'))
     parser.add_argument('--control', default='EDE')
     parser.add_argument('--metric', default=PRIMARY)

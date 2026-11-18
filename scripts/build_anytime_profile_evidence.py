@@ -26,8 +26,8 @@ def sha256(path: Path) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ledger", default="configs/anytime_profile_locked.csv")
-    ap.add_argument("--out", default="generated_submission")
+    ap.add_argument("--ledger", default="data/secondary/anytime_profile_locked.csv")
+    ap.add_argument("--out", default="results/primary")
     args = ap.parse_args()
 
     ledger = Path(args.ledger)

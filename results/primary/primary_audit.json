@@ -1,5 +1,5 @@
 {
-  "schema": "c15.1-primary-audit-v2",
+  "schema": "primary-audit-v2",
   "source_sha256": "b373820b3de0ce95d7daed4220502a19d0194c85eeba573a54a0ab9cfc75b86c",
   "manifest_sha256": "596feb0639ac1413d65f1c0a107edd979a9772d4c1044f79a1c7b0d441ebc687",
   "frozen_reference_sha256": "77d2ef7c153ddc668a7d5d72c15fd9559ca57df2209bb4fe01d3a78818465336",

@@ -11,7 +11,7 @@ from swevo_suite.stats import load_runs, summary_by_method
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('src', nargs='?', default=str(GENERATED / 'master_runs.csv'))
+    parser.add_argument('src', nargs='?', default=str(Path(__file__).resolve().parents[1] / 'data/primary/runs.csv'))
     parser.add_argument('dst', nargs='?', default=str(GENERATED / 'summary_by_method.csv'))
     args = parser.parse_args()
     ensure_generated_dirs()

@@ -1,7 +1,7 @@
 {
   "schema": "ede-secondary-parameter-sensitivity-v1",
   "input": {
-    "path": "configs/parameter_sensitivity_locked.csv",
+    "path": "data/secondary/parameter_sensitivity_locked.csv",
     "bytes": 28899,
     "sha256": "21de27c26d4e030937f51b37d967759e54f981960cc7be6bfaaab4aada0fbf26"
   },
