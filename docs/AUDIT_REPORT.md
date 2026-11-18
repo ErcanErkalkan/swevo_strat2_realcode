@@ -32,3 +32,5 @@ Audit date: 2026-11-18. Scope: local source, frozen ledgers, protocol locks, man
 | Open work | Full component ablation and external operational validation | No new long experiments launched; no journal submission asserted |
 
 Detailed machine results and final check counts are recorded in `submission/VALIDATION_REPORT.md` and `submission/CLEAN_REPRODUCTION.json`. Submission readiness is an engineering/package state; it does not guarantee editorial acceptance or completion of the open scientific campaign.
+
+Claim-map audit repair: migrated obsolete evidence paths, linked uncertainty to instance-cluster intervals, and generated the claim map after all its dependencies. Core checks now start with no pre-generated evidence so stale outputs cannot hide first-run failures. Frozen original templates remain in the historical archive; the active claim template reflects the current layout.

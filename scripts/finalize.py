@@ -11,11 +11,11 @@ COMMANDS=[
  ['build_latex_tables.py','results/primary/summary_by_method.csv','results/primary/master_stats.csv','--output-dir','results/primary'],
  ['build_robustness_evidence.py','data/primary/runs.csv','--output-dir','results/primary'],
  ['build_claim_macros.py','results/primary/summary_by_method.csv','--output','results/primary/claim_macros.tex'],
- ['build_claim_evidence_map.py','--summary','results/primary/summary_by_method.csv','--stats','results/primary/master_stats.csv','--output','results/primary/claim_evidence_map.csv'],
  ['build_operational_shift_evidence.py','--ledger','data/secondary/operational_shift_stress_locked.csv','--solomon-audit','data/secondary/solomon_equal_3shift_feasibility_audit.csv','--out','results/primary'],
  ['build_parameter_sensitivity_evidence.py','--ledger','data/secondary/parameter_sensitivity_locked.csv','--out','results/primary'],
  ['build_anytime_profile_evidence.py','--ledger','data/secondary/anytime_profile_locked.csv','--out','results/primary'],
  ['analyze_primary.py'],
+ ['build_claim_evidence_map.py','--summary','results/primary/summary_by_method.csv','--stats','results/primary/master_stats.csv','--output','results/primary/claim_evidence_map.csv'],
 ]
 def core():
     required=input_paths(ROOT)

@@ -182,3 +182,13 @@ def test_c14_secondary_anytime_profile() -> None:
         anytime_summary=summary, anytime_auc=auc, anytime_overall=overall,
     )
     assert completed.iloc[0]["status"] == "supported_as_secondary_anytime"
+
+
+def test_current_map_has_no_missing_or_stale_reproduction_paths():
+    current = pd.read_csv(ROOT / "results/primary/claim_evidence_map.csv")
+    assert len(current) == 14
+    assert current.status.map(lambda x: x.startswith("supported_") or x == "scope_declared").all()
+    assert current.reproduction_command.eq("python scripts/finalize.py --core").all()
+    for field in ["source_csv_or_tex", "generation_script"]:
+        assert not current[field].str.contains("generated_submission|finalize_submission_state|build_submission_strengthening_evidence").any()
+    assert "Instance-cluster" in current.set_index("claim_id").loc["C09", "exact_claim_text"]

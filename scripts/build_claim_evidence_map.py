@@ -204,9 +204,17 @@ def _fill_claim_row(
                     break
         out["status"] = "supported_by_artifacts" if supported else "not_supported_by_artifacts"
         out["notes"] = (
-            "raw_10800 and paired cap-compliant_10795 inference rows match exactly for omnibus and four pairwise comparisons."
+            "Raw 10800 and paired-exclusion 10795 inference rows match. The historical scope label cap_compliant_10795 means within the +10s logging tolerance, not within nominal caps."
             if supported else "Protocol sensitivity artifact is missing expected scopes or inferential equality."
         )
+        return out
+
+    if claim_id == "C09" and ci is not None and "ci_high" in ci:
+        supported = (len(ci) == 4 and set(ci.compare_method) == {"StdDE", "ALNS_MS", "HGS_MS", "ILS_MS"}
+            and ci.clusters.eq(36).all() and ci.cells.eq(108).all() and ci.bootstrap_reps.eq(20000).all()
+            and ci.ci_high.lt(0).all())
+        out["status"] = "supported_by_artifacts" if supported else "not_supported_by_artifacts"
+        out["notes"] = "; ".join(f"{r.compare_method}: median={r.median_cell_difference:.6f}, CI95=[{r.ci_low:.6f},{r.ci_high:.6f}]" for r in ci.itertuples(index=False)) + "; 36 instance clusters carry three scenarios together; 20000 resamples."
         return out
 
     if claim_id == "C09" and ci is not None:
@@ -338,6 +346,11 @@ def _fill_claim_row(
         out["notes"] = notes
         return out
 
+    if claim_id == "C11" and historical is None:
+        out["status"] = "scope_declared"
+        out["notes"] = "Historical variants are provenance only, outside current primary inference; no component effect is inferred."
+        return out
+
     out["status"] = "manual_review_needed"
     out["notes"] = "Claim id not wired into the submission generator."
     return out
@@ -353,10 +366,10 @@ def main() -> None:
     parser.add_argument("--scenario-robustness", default=str(GENERATED / "robustness_by_scenario.csv"))
     parser.add_argument("--structure-robustness", default=str(GENERATED / "robustness_by_structure.csv"))
     parser.add_argument("--native-reductions", default=str(GENERATED / "tier_native_endpoint_reductions.csv"))
-    parser.add_argument("--protocol-sensitivity", default=str(GENERATED / "protocol_sensitivity.csv"))
-    parser.add_argument("--block-effect-ci", default=str(GENERATED / "block_effect_bootstrap_ci.csv"))
-    parser.add_argument("--stability", default=str(GENERATED / "stability_by_method.csv"))
-    parser.add_argument("--historical-diagnostics", default=str(GENERATED / "historical_variant_directional_diagnostics.csv"))
+    parser.add_argument("--protocol-sensitivity", default=str(ROOT / "data/reference/protocol_sensitivity.csv"))
+    parser.add_argument("--block-effect-ci", default=str(GENERATED / "cluster_bootstrap.csv"))
+    parser.add_argument("--stability", default=None)
+    parser.add_argument("--historical-diagnostics", default=None)
     parser.add_argument("--operational-shift-summary", default=str(GENERATED / "operational_shift_stress_summary.csv"))
     parser.add_argument("--parameter-sensitivity-summary", default=str(GENERATED / "parameter_sensitivity_summary.csv"))
     parser.add_argument("--parameter-sensitivity-stats", default=str(GENERATED / "parameter_sensitivity_stats.csv"))
@@ -380,8 +393,12 @@ def main() -> None:
     native = _load_optional_csv(Path(args.native_reductions))
     protocol = _load_optional_csv(Path(args.protocol_sensitivity))
     ci = _load_optional_csv(Path(args.block_effect_ci))
-    stability = _load_optional_csv(Path(args.stability))
-    historical = _load_optional_csv(Path(args.historical_diagnostics))
+    stability = _load_optional_csv(Path(args.stability)) if args.stability else None
+    if stability is None and (ROOT / "data/primary/runs.csv").is_file():
+        raw = pd.read_csv(ROOT / "data/primary/runs.csv")
+        iqr = raw.groupby(["instance_id","scenario_id","method_id"])["j_scaled_final"].agg(lambda x: x.quantile(.75)-x.quantile(.25))
+        stability = iqr.groupby("method_id").median().rename("median_within_block_iqr").reset_index()
+    historical = _load_optional_csv(Path(args.historical_diagnostics)) if args.historical_diagnostics else None
     operational = _load_optional_csv(Path(args.operational_shift_summary))
     parameter_sensitivity = _load_optional_csv(Path(args.parameter_sensitivity_summary))
     parameter_sensitivity_stats = _load_optional_csv(Path(args.parameter_sensitivity_stats))
